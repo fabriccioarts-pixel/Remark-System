@@ -1,0 +1,8 @@
+# Dados de pacientes — NUNCA commitar
+*.csv
+
+# Windows local dev
+Iniciar CRM.bat
+
+# Node
+node_modules/

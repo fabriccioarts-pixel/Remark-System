@@ -1,0 +1,2010 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Remark® CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>tailwind.config={theme:{extend:{}}}</script>
+<style>
+:root{
+  --bg:    #0C0D10;
+  --surf:  #13141A;
+  --surf2: #1A1C23;
+  --surf3: #21242E;
+  --gold:  #B8965A;
+  --gold2: #CCA96A;
+  --gold3: rgba(184,150,90,.1);
+  --gold4: rgba(184,150,90,.05);
+  --bord:  #25272F;
+  --bord2: #2E3040;
+  --txt:   #EAECF2;
+  --txt2:  #8A8FA8;
+  --txt3:  #4E5268;
+}
+*{box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);margin:0;color:var(--txt)}
+
+/* ── SIDEBAR ── */
+.sidebar{width:240px;background:#0E0F14;min-height:100vh;position:fixed;left:0;top:0;z-index:100;display:flex;flex-direction:column;border-right:1px solid var(--bord)}
+.logo{font-family:'Helvetica','Arial',sans-serif;color:var(--txt);font-size:18px;font-weight:700;padding:24px 20px 16px;border-bottom:1px solid var(--bord);letter-spacing:-.3px}
+.logo small{display:block;font-size:9.5px;font-weight:400;color:var(--txt3);letter-spacing:1.8px;text-transform:uppercase;margin-top:4px;font-family:'Inter',sans-serif}
+.logo span{color:var(--gold)}
+.nav-sec{padding:20px 20px 5px;font-size:9.5px;letter-spacing:1.8px;text-transform:uppercase;color:var(--txt3)}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;margin:1px 8px;border-radius:7px;color:var(--txt2);cursor:pointer;font-size:13px;transition:all .15s}
+.nav-item:hover{color:var(--txt);background:var(--surf2)}
+.nav-item.active{color:var(--gold);background:var(--gold3);font-weight:600}
+.nav-badge{margin-left:auto;background:var(--gold);color:#0C0D10;border-radius:10px;padding:1px 7px;font-size:10.5px;font-weight:700}
+
+/* ── MAIN ── */
+.main{margin-left:240px;min-height:100vh}
+.topbar{background:var(--surf);padding:14px 28px;border-bottom:1px solid var(--bord);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;gap:16px}
+.pg-title{font-family:'Helvetica','Arial',sans-serif;font-size:18px;color:var(--txt);font-weight:700;letter-spacing:-.3px}
+.pg-sub{font-size:11.5px;color:var(--txt3);margin-top:2px}
+.content{padding:24px 28px}
+
+/* ── CARDS ── */
+.card{background:var(--surf);border-radius:10px;padding:20px;box-shadow:0 1px 8px rgba(0,0,0,.35);border:1px solid var(--bord)}
+.kpi{background:var(--surf);border-radius:10px;padding:18px 20px;box-shadow:0 1px 8px rgba(0,0,0,.35);border:1px solid var(--bord);position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--gold),transparent)}
+.kpi-lbl{font-size:10.5px;font-weight:500;letter-spacing:.6px;color:var(--txt3);text-transform:uppercase}
+.kpi-val{font-size:28px;font-weight:700;color:var(--txt);line-height:1.2;margin-top:4px}
+.kpi-sub{font-size:11.5px;color:var(--txt2);margin-top:3px}
+.kpi-ico{position:absolute;right:16px;top:16px;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--gold);background:var(--gold3);border:1px solid rgba(184,150,90,.2)}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.bc{background:rgba(16,185,129,.15);color:#34D399;border:1px solid rgba(16,185,129,.2)}
+.bx{background:rgba(239,68,68,.12);color:#F87171;border:1px solid rgba(239,68,68,.2)}
+.bf{background:rgba(245,158,11,.12);color:#FBBF24;border:1px solid rgba(245,158,11,.2)}
+.bn{background:rgba(255,255,255,.06);color:var(--txt2);border:1px solid var(--bord2)}
+
+/* ── TABLE ── */
+table{width:100%;border-collapse:collapse}
+th{padding:9px 14px;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--gold);background:var(--surf2);border-bottom:1px solid var(--bord)}
+td{padding:11px 14px;font-size:13.5px;color:var(--txt);border-bottom:1px solid var(--bord)}
+tr:hover td{background:var(--gold4)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;border-radius:7px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s;border:none}
+.btn-p{background:linear-gradient(135deg,#E8C96A 0%,#C9A84C 50%,#8B6914 100%);color:#111;box-shadow:0 2px 8px rgba(201,168,76,.3)}.btn-p:hover{background:linear-gradient(135deg,#F0D57A 0%,#D4AF60 50%,#9A7820 100%);transform:translateY(-1px);box-shadow:0 4px 14px rgba(201,168,76,.45)}
+.btn-s{background:linear-gradient(135deg,rgba(232,201,106,.18) 0%,rgba(201,168,76,.08) 100%);color:var(--gold);border:1px solid rgba(201,168,76,.35)}.btn-s:hover{background:linear-gradient(135deg,rgba(232,201,106,.28) 0%,rgba(201,168,76,.16) 100%);border-color:rgba(201,168,76,.6)}
+.btn-wa{background:linear-gradient(135deg,#2EE876 0%,#25D366 60%,#1AAB50 100%);color:#fff;text-decoration:none;box-shadow:0 2px 8px rgba(37,211,102,.25)}.btn-wa:hover{background:linear-gradient(135deg,#3AF082 0%,#1ebe58 60%,#158F3E 100%);transform:translateY(-1px);box-shadow:0 4px 14px rgba(37,211,102,.4)}
+
+/* ── SEARCH & SELECTS ── */
+.search{font-family:inherit;background:var(--surf2);border:1px solid var(--bord2);border-radius:8px;padding:8px 14px;font-size:13.5px;color:var(--txt);outline:none;transition:all .2s;height:38px;box-sizing:border-box}
+.search:focus{border-color:var(--gold);background:var(--surf3);box-shadow:0 0 0 2px var(--gold4)}
+.search::placeholder{color:var(--txt3)}
+
+/* ── CUSTOM DROPDOWN ── */
+.c-sel{position:relative;width:155px;user-select:none;font-size:13.2px}
+.c-sel-trig{background:var(--surf2);border:1px solid var(--bord2);border-radius:8px;padding:8px 14px;color:var(--txt);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .2s;height:38px;box-sizing:border-box}
+.c-sel-trig:hover{border-color:var(--gold)}
+.c-sel-trig.open{border-color:var(--gold);background:var(--surf3);box-shadow:0 0 0 2px var(--gold4)}
+.c-sel-trig::after{content:'';width:0;height:0;border-left:4.5px solid transparent;border-right:4.5px solid transparent;border-top:5.5px solid var(--gold);margin-left:8px;transition:transform .2s}
+.c-sel-trig.open::after{transform:rotate(180deg)}
+
+.c-sel-opts{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--surf);border:1px solid var(--bord2);border-radius:12px;overflow:hidden;z-index:200;display:none;box-shadow:0 10px 40px rgba(0,0,0,.6);animation:fadeUp .15s ease-out;border:1px solid rgba(184,150,90,.15)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.c-sel-opt{padding:11px 14px;cursor:pointer;transition:all .15s;color:var(--txt2);font-weight:500}
+.c-sel-opt:hover{background:var(--gold3);color:var(--gold)}
+.c-sel-opt.active{background:var(--gold);color:#111;font-weight:700}
+
+/* ── SEG CONTROL ── */
+.seg{display:flex;background:var(--surf2);border-radius:7px;padding:3px;gap:2px;border:1px solid var(--bord)}
+.seg-b{padding:5px 12px;border-radius:5px;font-size:12.5px;font-weight:500;color:var(--txt2);cursor:pointer;border:none;background:none;transition:all .2s}
+.seg-b.on{background:var(--gold);color:#000;font-weight:700}
+
+/* ── KANBAN ── */
+.kb-scroll-top{overflow-x:auto;overflow-y:hidden;height:10px;margin-bottom:8px}
+.kb-scroll-top::-webkit-scrollbar{height:6px}
+.kb-scroll-top::-webkit-scrollbar-track{background:var(--surf2);border-radius:3px}
+.kb-scroll-top::-webkit-scrollbar-thumb{background:var(--gold);border-radius:3px}
+.kb-scroll-top::-webkit-scrollbar-thumb:hover{background:#b8965a}
+.kb-board{display:flex;gap:14px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.kb-board::-webkit-scrollbar{display:none}
+.kb-col{min-width:232px;background:var(--surf2);border-radius:10px;padding:10px;border:2px solid var(--bord);transition:all .2s}
+.kb-col.dov{background:var(--gold3);border-color:var(--gold)}
+.kb-hd{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;padding:0 2px}
+.kb-cnt{background:var(--gold3);color:var(--gold);border-radius:10px;padding:1px 7px;font-size:10.5px;border:1px solid rgba(201,168,76,.2)}
+.kb-card{background:var(--surf);border-radius:8px;padding:11px;margin-bottom:7px;box-shadow:0 2px 8px rgba(0,0,0,.3);border:1px solid var(--bord2);cursor:grab;transition:all .15s}
+.kb-card:hover{box-shadow:0 4px 16px rgba(201,168,76,.12);border-color:rgba(201,168,76,.35)}
+.kb-card.drag{opacity:.4;transform:scale(.96)}
+
+/* ── REMARKETING CARDS ── */
+.rm-card{background:var(--surf);border-radius:10px;padding:14px;border:1px solid var(--bord2);display:flex;align-items:center;gap:14px;margin-bottom:9px;transition:all .2s}
+.rm-card:hover{box-shadow:0 4px 16px rgba(201,168,76,.1);border-color:rgba(201,168,76,.3)}
+.rm-card.sent{opacity:.45;background:var(--surf2)}
+
+/* ── LEAD INFO MODAL ── */
+.lic-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.lic-card{background:var(--surf3);border:1px solid var(--bord);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;transition:border-color .2s}
+.lic-card:hover{border-color:rgba(184,150,90,.3)}
+.lic-ico{width:32px;height:32px;background:var(--gold3);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--gold);flex-shrink:0}
+.lic-det{flex:1;min-width:0}
+.lic-lbl{font-size:9.5px;font-weight:700;color:var(--txt3);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
+.lic-val{font-size:13px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lic-val input{background:transparent;border:none;border-bottom:1px solid var(--bord2);color:var(--txt);font-size:13px;font-weight:600;width:100%;outline:none;padding:0}
+.lic-val input:focus{border-bottom-color:var(--gold)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--surf3);color:var(--txt);padding:12px 20px;border-radius:8px;font-size:13.5px;z-index:9999;transform:translateY(70px);opacity:0;transition:all .3s;pointer-events:none;border:1px solid var(--gold);box-shadow:0 4px 20px rgba(201,168,76,.2)}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal{background:var(--surf);border-radius:16px;padding:28px;max-width:500px;width:92%;max-height:88vh;overflow-y:auto;border:1px solid var(--bord2);box-shadow:0 8px 40px rgba(0,0,0,.6)}
+.modal-title{font-family:'Helvetica','Arial',sans-serif;font-size:19px;color:var(--gold);font-weight:700;margin-bottom:6px}
+.ctx-item{padding:7px 12px;border-radius:6px;cursor:pointer;color:var(--txt2);display:flex;align-items:center;gap:9px;transition:background .1s;white-space:nowrap}
+.ctx-item:hover{background:var(--surf3);color:var(--txt)}
+.ctx-item.danger{color:#F87171}.ctx-item.danger:hover{background:rgba(239,68,68,.1)}
+.ctx-sep{height:1px;background:var(--bord);margin:4px 0}
+
+/* ── MISC ── */
+.empty{text-align:center;padding:56px 20px;color:var(--txt3)}
+.empty-ico{font-size:44px;margin-bottom:14px}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surf)}
+::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--gold3)}
+.spin{width:30px;height:30px;border:3px solid var(--bord2);border-top-color:var(--gold);border-radius:50%;animation:sp .7s linear infinite;margin:0 auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+input[type=checkbox]{accent-color:var(--gold)}
+</style>
+</head>
+<body>
+<div id="ctx-menu" style="display:none;position:fixed;z-index:9999;background:var(--surf2);border:1px solid var(--bord2);border-radius:10px;padding:5px;min-width:200px;box-shadow:0 8px 32px rgba(0,0,0,.5);font-size:13px"></div>
+
+<nav class="sidebar">
+  <div class="logo">Re<span>mark</span><sup>®</sup><small>CRM · Gestão de Pacientes</small></div>
+  <div class="nav-sec">Principal</div>
+  <div class="nav-item active" data-p="dashboard" onclick="go('dashboard')">
+    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h8v8H3zm0 10h8v8H3zm10-10h8v8h-8zm0 10h8v8h-8z"/></svg>
+    Dashboard
+  </div>
+  <div class="nav-item" data-p="patients" onclick="go('patients')">
+    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+    Pacientes
+    <span class="nav-badge" id="pcnt"></span>
+  </div>
+  <div class="nav-sec">Comercial</div>
+  <div class="nav-item" data-p="remarketing" onclick="go('remarketing')">
+    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+    Remarketing WA
+  </div>
+  <div class="nav-item" data-p="kanban" onclick="go('kanban')">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg>
+    Kanban
+  </div>
+  <div class="nav-item" data-p="funnel" onclick="go('funnel')">
+    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
+    Funil de Vendas
+  </div>
+  <div class="nav-item" data-p="bdays" onclick="go('bdays')">
+    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6v2H6a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-8a3 3 0 0 0-3-3h-2V6a4 4 0 0 0-8 0zm6 0v2h-4V6a2 2 0 0 1 4 0zM5 11h14v8H5v-8zm4-5.5a1 1 0 0 1 1-1h4a1 1 0 0 1 0 2H10a1 1 0 0 1-1-1z"/><circle cx="8" cy="3" r="1.2"/><circle cx="12" cy="2" r="1.2"/><circle cx="16" cy="3" r="1.2"/></svg>
+    Aniversários
+    <span class="nav-badge" id="bday-cnt" style="display:none"></span>
+  </div>
+  <div style="margin-top:auto;padding:12px 12px;border-top:1px solid var(--bord)">
+    <label class="btn btn-p" style="width:100%;justify-content:center;cursor:pointer;font-size:12px;padding:9px 14px">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+      Importar Planilha
+      <input type="file" accept=".csv" id="csv-in" style="display:none" onchange="importCSV(event)">
+    </label>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="pg-title" id="pg-title">Dashboard</div>
+      <div class="pg-sub" id="pg-sub">Visão geral do CRM Natuclinic</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="c-sel">
+        <div class="c-sel-trig" id="p-trig" onclick="togglePeriod()">
+          <span id="p-lbl">Todo o período</span>
+        </div>
+        <div class="c-sel-opts" id="p-opts">
+          <div class="c-sel-opt active" data-val="all" onclick="setPeriod('all','Todo o período')">Todo o período</div>
+          <div class="c-sel-opt" data-val="30" onclick="setPeriod('30','Últimos 30 dias')">Últimos 30 dias</div>
+          <div class="c-sel-opt" data-val="90" onclick="setPeriod('90','Últimos 90 dias')">Últimos 90 dias</div>
+          <div class="c-sel-opt" data-val="180" onclick="setPeriod('180','Últimos 180 dias')">Últimos 180 dias</div>
+          <div class="c-sel-opt" data-val="year" onclick="setPeriod('year','Este ano')">Este ano</div>
+        </div>
+      </div>
+      <input class="search" style="width:210px" placeholder="Buscar paciente..." id="gsearch" oninput="onSearch(this.value)">
+      <div id="hdr-acts"></div>
+    </div>
+  </div>
+  <div class="content" id="view"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="modal-bg" style="display:none" class="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-body"></div>
+</div>
+
+<script>
+// ─── SUPABASE ─────────────────────────────────────────────────────────────────
+const SB=supabase.createClient(
+  'https://sibmrbzhxlyhmpmvhfeo.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpYm1yYnpoeGx5aG1wbXZoZmVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MDkyMzIsImV4cCI6MjA5NDA4NTIzMn0.aDl15UHHVuaidLgqrww7HzGc-JbFKWzbubeSC69PHqY'
+);
+let sbSaveTimer=null;
+
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+const DEFAULT_STAGES = [
+  {id:'entrar',  label:'Entrar em Contato', ico:'msg',    dot:'#5A6080'},
+  {id:'contato', label:'Em Contato',         ico:'phone',  dot:'#4A7FA5'},
+  {id:'interes', label:'Interessado',         ico:'star',   dot:'#B8965A'},
+  {id:'agend',   label:'Agendado',            ico:'cal',    dot:'#7C6A3E'},
+  {id:'retornou',label:'Retornou',            ico:'target', dot:'#4A9E7A'},
+  {id:'nao',     label:'Não Contatar',        ico:'x',      dot:'#7A3A3A'},
+];
+
+const TMPLS = {
+  botox:{label:'Botox',icon:'syringe',cor:'#FFC2C2',
+    msg:n=>`Olá, ${fn(n)}.\n\nAqui é a equipe da *Natuclinic.*\n\nPassando para te lembrar que o seu *Botox* já está no prazo de manutenção — e cuidar disso na hora certa faz toda a diferença no resultado.\n\nTemos horários disponíveis essa semana.\n\nQuer garantir o seu?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`},
+  harmoniz:{label:'Harmonização Facial',icon:'sparkle',cor:'#FFC2C2',
+    msg:n=>`Olá, ${fn(n)}.\n\nAqui é a equipe da *Natuclinic.*\n\nA sua *Harmonização Facial* está no período ideal de manutenção.\n\nCada protocolo tem seu tempo — e respeitar esse ritmo é o que preserva o resultado que você conquistou.\n\nTemos agenda disponível. Vamos marcar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`},
+  ortomol:{label:'Consulta Ortomolecular',icon:'leaf',cor:'rgba(16,185,129,.15)',
+    msg:n=>`Olá, ${fn(n)}.\n\nAqui é a equipe da *Natuclinic.*\n\nFaz um tempo desde a sua última *Consulta Ortomolecular* — e o acompanhamento contínuo é o que garante que o seu corpo continue respondendo bem.\n\nComo você está se sentindo?\n\nQuer agendar uma reavaliação?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`},
+  retorno:{label:'Retorno Pendente',icon:'refresh',cor:'#DBEAFE',
+    msg:n=>`Olá, ${fn(n)}.\n\nAqui é a equipe da *Natuclinic.*\n\nVocê tem um *Retorno* pendente com a gente.\n\nEsse acompanhamento é parte do seu protocolo — e ele existe para garantir que os resultados se mantenham.\n\nTemos horários disponíveis. Quando fica bom pra você?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`},
+  ozonio:{label:'Ozonioterapia',icon:'bubble',cor:'#E0F2FE',
+    msg:n=>`Olá, ${fn(n)}.\n\nAqui é a equipe da *Natuclinic.*\n\nSua sessão de *Ozonioterapia* está em aberto.\n\nA frequência das sessões é o que faz o tratamento funcionar de verdade — cada intervalo importa.\n\nVamos remarcar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`},
+  intrart:{label:'Intra-Articular',icon:'joint',cor:'rgba(245,158,11,.15)',
+    msg:n=>`Olá, ${fn(n)}.\n\nAqui é a equipe da *Natuclinic.*\n\nO seu protocolo de *Intra-Articular* precisa de continuidade para os resultados se consolidarem.\n\nInterromper no meio do processo pode comprometer o que você já investiu.\n\nVamos agendar a próxima sessão?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`},
+  reab:{label:'Reabilitação Intestinal',icon:'sprout',cor:'rgba(16,185,129,.15)',
+    msg:n=>`Olá, ${fn(n)}.\n\nAqui é a equipe da *Natuclinic.*\n\nSeu protocolo de *Reabilitação Intestinal* está em andamento — e a consistência é tudo nesse processo.\n\nSabia que a maioria dos resultados aparece justamente na continuidade do tratamento?\n\nQuer agendar a próxima etapa?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`},
+  estetica:{label:'Estética',icon:'face',cor:'var(--gold3)',
+    msg:n=>`Olá, ${fn(n)}.\n\nAqui é a equipe da *Natuclinic.*\n\nFaz um tempo desde a sua última sessão de *estética* com a gente.\n\nPele bem cuidada não é luxo — é rotina. E sua pele merece essa atenção.\n\nTemos horários disponíveis essa semana. Quer marcar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`},
+  injet:{label:'Injetáveis',icon:'pill',cor:'#EDE9FE',
+    msg:n=>`Olá, ${fn(n)}.\n\nAqui é a equipe da *Natuclinic.*\n\nSua sessão de *Injetáveis* está no prazo de renovação.\n\nManter o protocolo em dia é o que garante os resultados que você já viu — e evita perder o que foi conquistado.\n\nVamos agendar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`},
+  cancelou:{label:'Cancelamento',icon:'warn',cor:'rgba(239,68,68,.15)',
+    msg:n=>`Olá, ${fn(n)}.\n\nAqui é a equipe da *Natuclinic.*\n\nVimos que você precisou cancelar seu agendamento — sem problemas, entendemos que imprevistos acontecem.\n\nMas não queremos que você perca a continuidade do seu cuidado.\n\nQual seria o melhor momento para remarcarmos?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`},
+  faltou:{label:'Faltou',icon:'clock',cor:'rgba(245,158,11,.15)',
+    msg:n=>`Olá, ${fn(n)}.\n\nAqui é a equipe da *Natuclinic.*\n\nNotamos que você não pôde comparecer ao seu agendamento.\n\nSabemos que a vida é corrida — mas seu tratamento foi pensado especialmente para você, e cada sessão conta.\n\nQuer remarcar? Temos horários flexíveis.\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`},
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+const S = {
+  patients: [],
+  kanban: {},         // patientId -> stageId
+  rmkSent: {},        // patientId -> bool
+  birthdates: {},     // patientId -> "DD/MM"
+  vouchers: {},       // "id-year-month" -> {code, sent, sentAt, usedAt}
+  voucherConfig: {discount:'10%'},
+  waConfig: {token:'', phoneNumberId:'', templateName:'hello_world', enabled:false},
+  stages: JSON.parse(JSON.stringify(DEFAULT_STAGES)),
+  page: 'dashboard',
+  q: '',
+  rmkFilter: 'all',
+  period: 'all',      // all, 30, 90, 180, year
+  kbBdayOnly: false,
+  charts: {},
+};
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function fn(nome){
+  if(!nome) return 'paciente';
+  const p = nome.trim().split(' ')[0];
+  return p.charAt(0).toUpperCase()+p.slice(1).toLowerCase();
+}
+
+function fmtPhone(p){
+  if(!p) return '';
+  const d = p.replace(/\D/g,'');
+  return d.length>=10 ? (d.startsWith('55')?d:'55'+d) : '';
+}
+
+function getInitials(n){
+  if(!n) return '?';
+  const p=n.trim().split(' ').filter(x=>x.length>1);
+  if(p.length===0) return n.trim()[0]?.toUpperCase()||'?';
+  if(p.length===1) return p[0].substring(0,2).toUpperCase();
+  return (p[0][0]+p[p.length-1][0]).toUpperCase();
+}
+
+function waUrl(phone,msg){
+  const n = fmtPhone(phone);
+  return n ? `https://wa.me/${n}?text=${encodeURIComponent(msg)}` : '#';
+}
+
+function parseDate(s){
+  if(!s) return null;
+  const [d,m,y]=s.split('/');
+  return new Date(`${y}-${m}-${d}`);
+}
+
+function daysSince(s){
+  const d=parseDate(s); if(!d) return 9999;
+  return Math.floor((Date.now()-d)/(864e5));
+}
+
+function fmtDate(s){
+  if(!s) return '–';
+  const d=parseDate(s); if(!d) return s;
+  return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+function fmtDateTime(s,hora){
+  if(!s) return '–';
+  const d=parseDate(s); if(!d) return s;
+  const dt=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
+  return hora?`${dt} às ${hora}`:dt;
+}
+
+function timeAgo(s){
+  const d=parseDate(s); if(!d) return '?';
+  const diff=Date.now()-d.getTime();
+  const mins=Math.floor(diff/60000);
+  const hrs=Math.floor(diff/3600000);
+  const days=Math.floor(diff/864e5);
+  const months=Math.floor(days/30.44);
+  const years=Math.floor(days/365.25);
+  if(mins<60) return `${mins}min`;
+  if(hrs<24) return `${hrs}h`;
+  if(days<30) return `${days} dias`;
+  if(months<12){
+    const rem=days-Math.floor(months*30.44);
+    return rem>0?`${months} ${months===1?'mês':'meses'} e ${rem}d`:`${months} ${months===1?'mês':'meses'}`;
+  }
+  const remM=months-years*12;
+  return remM>0?`${years} ${years===1?'ano':'anos'} e ${remM} ${remM===1?'mês':'meses'}`:`${years} ${years===1?'ano':'anos'}`;
+}
+
+function badge(st){
+  const m={'confirmado':'bc','cancelou':'bx','faltou':'bf'};
+  const k=(st||'').toLowerCase();
+  const c=m[k]||'bn';
+  return `<span class="badge ${c}">${st||'–'}</span>`;
+}
+
+function toast(msg,ms=3000){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),ms);
+}
+
+function openModal(html){
+  document.getElementById('modal-body').innerHTML=html;
+  document.getElementById('modal-bg').style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function closeModal(){ document.getElementById('modal-bg').style.display='none'; document.body.style.overflow=''; }
+
+function copyTxt(txt){
+  navigator.clipboard.writeText(txt).catch(()=>{
+    const ta=document.createElement('textarea');
+    ta.value=txt; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+  });
+  toast('✅ Mensagem copiada!');
+}
+
+function persist(){
+  try{
+    localStorage.setItem('nc_kanban',JSON.stringify(S.kanban));
+    localStorage.setItem('nc_rmk',JSON.stringify(S.rmkSent));
+    localStorage.setItem('nc_bday',JSON.stringify(S.birthdates));
+    localStorage.setItem('nc_vouchers',JSON.stringify(S.vouchers));
+    localStorage.setItem('nc_vconfig',JSON.stringify(S.voucherConfig));
+    localStorage.setItem('nc_waconfig',JSON.stringify(S.waConfig));
+    localStorage.setItem('nc_stages',JSON.stringify(S.stages));
+    localStorage.setItem('nc_updated',new Date().toISOString());
+  }catch(e){}
+  clearTimeout(sbSaveTimer);
+  sbSaveTimer=setTimeout(()=>sbSave(),1500);
+}
+
+async function sbSave(){
+  const now=localStorage.getItem('nc_updated')||new Date().toISOString();
+  try{
+    const rows=localStorage.getItem('nc_rows');
+    const core={id:'natuclinic',kanban:S.kanban,rmk_sent:S.rmkSent,birthdates:S.birthdates,vouchers:S.vouchers,voucher_config:S.voucherConfig,patients_raw:rows};
+    const stg=S.stages.length?S.stages:JSON.parse(JSON.stringify(DEFAULT_STAGES));
+    // Tenta do mais completo ao mínimo — cada nível remove uma coluna opcional
+    // para contornar colunas que ainda não existem no Supabase
+    const attempts=[
+      {...core,kanban:S.kanban,wa_config:S.waConfig,stages:stg,updated_at:now},
+      {...core,stages:stg,updated_at:now},
+      {...core,updated_at:now},
+      core,   // mínimo garantido: só colunas originais da tabela
+    ];
+    for(const payload of attempts){
+      const {error}=await SB.from('crm_state').upsert(payload,{onConflict:'id'});
+      if(!error){
+        // Marca timestamp do save bem-sucedido para comparação no load
+        localStorage.setItem('nc_sb_ts',now);
+        toast('☁️ Salvo');
+        return;
+      }
+      console.warn('sbSave attempt failed:',error.message);
+    }
+    toast('⚠️ Falha ao salvar na nuvem');
+  }catch(e){
+    toast('⚠️ Supabase offline');
+    console.warn('Supabase offline:',e.message);
+  }
+}
+
+async function loadPersist(){
+  let sbData=null;
+  try{
+    const {data,error}=await SB.from('crm_state').select('*').eq('id','natuclinic').single();
+    if(!error&&data) sbData=data;
+    else if(error) console.warn('Supabase load error:',error.message);
+  }catch(e){ console.warn('Supabase offline:',e.message); }
+
+  // preferLocal = true quando há mudanças locais mais recentes que o último save confirmado
+  // (F5 rápido antes do debounce de 1.5s, ou sbSave falhou)
+  const localTs=localStorage.getItem('nc_updated');
+  const sbTs=localStorage.getItem('nc_sb_ts');   // timestamp do último sbSave bem-sucedido
+  const preferLocal=localTs&&(!sbTs||new Date(localTs)>new Date(sbTs));
+  const getS=(key,sbKey)=>preferLocal
+    ?(localStorage.getItem('nc_'+key)??sbData?.[sbKey||key])
+    :(sbData?.[sbKey||key]??localStorage.getItem('nc_'+key));
+
+  try{
+    const k=getS('kanban'); if(k) S.kanban=typeof k==='string'?JSON.parse(k):k;
+    const r=getS('rmk','rmk_sent'); if(r) S.rmkSent=typeof r==='string'?JSON.parse(r):r;
+    const b=getS('bday','birthdates'); if(b) S.birthdates=typeof b==='string'?JSON.parse(b):b;
+    const v=getS('vouchers'); if(v) S.vouchers=typeof v==='string'?JSON.parse(v):v;
+    const vc=getS('vconfig','voucher_config'); if(vc) S.voucherConfig=typeof vc==='string'?JSON.parse(vc):vc;
+    const wc=getS('waconfig','wa_config'); if(wc) S.waConfig=typeof wc==='string'?JSON.parse(wc):wc;
+    const st=getS('stages'); if(st) S.stages=typeof st==='string'?JSON.parse(st):st;
+    if(!Array.isArray(S.stages)||!S.stages.length) S.stages=JSON.parse(JSON.stringify(DEFAULT_STAGES));
+    
+    // Especial para pacientes
+    const p=sbData?.patients_raw || localStorage.getItem('nc_rows');
+    if(p){
+      if(sbData?.patients_raw) localStorage.setItem('nc_rows',p);
+      S.patients=buildPatients(JSON.parse(p));
+    }
+  }catch(e){ console.error('Load error:',e); }
+}
+
+function saveBday(id,val){
+  if(val) S.birthdates[id]=val; else delete S.birthdates[id];
+  persist();
+}
+
+function genVoucher(id){
+  const now=new Date();
+  const key=`${id}-${now.getFullYear()}-${now.getMonth()+1}`;
+  if(S.vouchers[key]) return S.vouchers[key];
+  const code='NATU'+id.toString().slice(-4).toUpperCase()+String(now.getMonth()+1).padStart(2,'0')+String(now.getFullYear()).slice(-2);
+  S.vouchers[key]={code,sent:false,usedAt:null,createdAt:new Date().toISOString()};
+  persist();
+  return S.vouchers[key];
+}
+
+function markVoucherSent(id){
+  const now=new Date();
+  const key=`${id}-${now.getFullYear()}-${now.getMonth()+1}`;
+  if(!S.vouchers[key]) genVoucher(id);
+  S.vouchers[key].sent=true;
+  S.vouchers[key].sentAt=new Date().toISOString();
+  persist();
+  const el=document.getElementById(`bday-card-${id}`);
+  if(el) el.setAttribute('data-sent','1');
+  refreshBdaySection();
+}
+
+function refreshBdaySection(){
+  const el=document.getElementById('bday-section');
+  if(el) el.innerHTML=renderBdaySection();
+  updateBdayCnt();
+}
+
+function bdayMsg(nome,voucher){
+  const cfg=S.voucherConfig;
+  const disc=cfg.discount||'10%';
+  const code=voucher?.code||'';
+  return `Olá, ${fn(nome)}.\n\nO mês do seu aniversário chegou e a equipe da *Natuclinic* veio te desejar um novo ciclo repleto de saúde, leveza e conquistas — você merece cada uma delas.\n\nComo presente, preparamos um *voucher exclusivo* para você:\n\n*${disc} de desconto* em qualquer procedimento estético agendado durante o seu mês de aniversário.\n\n*Código:* ${code}\n\nVálido durante todo o mês. Basta informar o código no momento do agendamento.\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`;
+}
+
+function thisMonthBdays(){
+  const now=new Date();
+  const mm=String(now.getMonth()+1).padStart(2,'0');
+  return S.patients.filter(p=>{
+    const b=S.birthdates[p.id]; if(!b) return false;
+    return b.slice(3,5)===mm;
+  }).sort((a,b)=>{
+    const da=parseInt(S.birthdates[a.id]||'99');
+    const db=parseInt(S.birthdates[b.id]||'99');
+    return da-db;
+  });
+}
+
+// ─── CSV + DATA ───────────────────────────────────────────────────────────────
+function fixEnc(s){
+  return s
+    .replace(/Ã§/g,'ç').replace(/Ã£/g,'ã').replace(/Ã¡/g,'á').replace(/Ã©/g,'é')
+    .replace(/Ã³/g,'ó').replace(/Ãº/g,'ú').replace(/Ã­/g,'í').replace(/Ã‡/g,'Ç')
+    .replace(/Ã•/g,'Õ').replace(/Ã‚/g,'Â').replace(/Ã‰/g,'É').replace(/Ã"/g,'Ó')
+    .replace(/Ã/g,'Á').replace(/Ã¢/g,'â').replace(/Ãµ/g,'õ').replace(/Ã"/g,'Ô')
+    .replace(/Ã´/g,'ô').replace(/Ãª/g,'ê').replace(/Ã€/g,'À').replace(/Ã¨/g,'è')
+    .replace(/Ã¼/g,'ü').replace(/Ã¶/g,'ö').replace(/Ã¤/g,'ä').replace(/Ã®/g,'î')
+    .replace(/Ã»/g,'û').replace(/Ã«/g,'ë').replace(/Ã¯/g,'ï');
+}
+
+function csvSplitLine(line, sep){
+  const cols=[]; let cur='', inQ=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){ inQ=!inQ; }
+    else if(ch===sep&&!inQ){ cols.push(cur); cur=''; }
+    else{ cur+=ch; }
+  }
+  cols.push(cur);
+  return cols;
+}
+
+function parseCSV(txt){
+  // Normalize ALL line endings to \n first — critical for CRLF files
+  txt=txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const lines=txt.split('\n').filter(l=>l.trim());
+  if(lines.length<2) return [];
+  // Detect separator by counting on header
+  const firstLine=lines[0];
+  const sep=firstLine.split(',').length>=firstLine.split(';').length?',':';';
+  // Detect windows-1252 mojibake (only when file read with wrong encoding)
+  const needsFix=firstLine.includes('Ã')||firstLine.includes('â€');
+  const fix=s=>needsFix?fixEnc(s):s;
+  const hdr=csvSplitLine(firstLine,sep).map(h=>fix(h.trim()));
+  console.log('CSV sep='+JSON.stringify(sep)+' cols='+hdr.length+' hdr[4]='+hdr[4]);
+  return lines.slice(1).map(l=>{
+    const cols=csvSplitLine(l,sep).map(c=>fix(c.trim()));
+    const row={};
+    hdr.forEach((h,i)=>{ row[h]=cols[i]||''; });
+    return row;
+  }).filter(r=>r['Paciente']&&r['Paciente'].trim());
+}
+
+function buildPatients(rows){
+  const map=new Map();
+  rows.forEach(r=>{
+    const raw=r['Paciente']||'';
+    const m=raw.match(/^(\d+)\s*-\s*(.+)$/);
+    if(!m) return;
+    const id=m[1], nome=m[2].trim();
+    if(!map.has(id)){
+      map.set(id,{id,nome,
+        cpf:r['CPF']||'',
+        tel:r['Telefone']||'',
+        email:r['Email']||'',
+        atend:[]});
+    }
+    const p=map.get(id);
+    if(!p.tel && r['Telefone']) p.tel=r['Telefone'];
+    if(!p.email && r['Email']) p.email=r['Email'];
+    p.atend.push({
+      data:r['Data do agendamento']||'',
+      hora:r['Hora']||'',
+      tipo:r['Tipo de Atendimento']||'',
+      status:r['Status']||'',
+      medico:r['Médico']||r['Médico']||'',
+    });
+  });
+  const pts=Array.from(map.values());
+  pts.forEach(p=>{
+    p.atend.sort((a,b)=>{const da=parseDate(a.data),db=parseDate(b.data);return(db||0)-(da||0);});
+    p.last=p.atend[0]||null;
+    p.total=p.atend.length;
+    p.stage=S.kanban[p.id]||autoStage(p);
+  });
+  return pts.sort((a,b)=>{
+    const da=a.last?parseDate(a.last.data):null;
+    const db=b.last?parseDate(b.last.data):null;
+    return (db||0)-(da||0);
+  });
+}
+
+function autoStage(p){
+  // On import everyone goes to "Entrar em Contato" — no exceptions
+  return 'entrar';
+}
+
+function rmkCat(tipo,status){
+  const t=(tipo||'').toLowerCase(), s=(status||'').toLowerCase();
+  if(s==='cancelou') return 'cancelou';
+  if(s==='faltou') return 'faltou';
+  if(t.includes('botox')) return 'botox';
+  if(t.includes('harmoniz')) return 'harmoniz';
+  if(t.includes('intra-articular')||t.includes('intraarticular')) return 'intrart';
+  if(t.includes('ortomolecular')) return 'ortomol';
+  if(t.includes('retorno')) return 'retorno';
+  if(t.includes('ozônio')||t.includes('ozonio')||t.includes('ozonioterapia')) return 'ozonio';
+  if(t.includes('reabilitação')||t.includes('reabilitacao')) return 'reab';
+  if(t.includes('injetável')||t.includes('injetavel')||t.includes('vitamina')||
+     t.includes('adek')||t.includes('trio')||t.includes('pool')||
+     t.includes('chronic')||t.includes('pisk')||t.includes('beg')||t.includes('enzima')) return 'injet';
+  if(t.includes('estética')||t.includes('estetica')||t.includes('limpeza')||
+     t.includes('avaliação')||t.includes('avaliacao')||t.includes('spa')||t.includes('lipocrio')) return 'estetica';
+  return 'ortomol';
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+const META={
+  dashboard:{title:'Dashboard',sub:'Visão geral do CRM Natuclinic'},
+  patients:{title:'Pacientes',sub:'Histórico e gestão de pacientes'},
+  remarketing:{title:'Remarketing',sub:'Mensagens personalizadas via WhatsApp'},
+  kanban:{title:'Kanban',sub:'Pipeline de atendimento – arraste os cards'},
+  funnel:{title:'Funil de Vendas',sub:'Análise de conversão e distribuição'},
+  bdays:{title:'Aniversariantes',sub:'Remarketing de aniversário com vouchers de desconto'},
+};
+
+function go(p){
+  S.page=p;
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.p===p));
+  const m=META[p]||{};
+  document.getElementById('pg-title').textContent=m.title||p;
+  document.getElementById('pg-sub').textContent=m.sub||'';
+  document.getElementById('hdr-acts').innerHTML='';
+  if(!S.patients.length){ renderEmpty(); return; }
+  ({dashboard:renderDash,patients:renderPats,remarketing:renderRmk,kanban:renderKanban,funnel:renderFunnel,bdays:renderBdaysPage}[p]||renderEmpty)();
+}
+
+function renderEmpty(){
+  document.getElementById('view').innerHTML=`
+  <div class="empty">
+    <div class="empty-ico" style="color:var(--txt3)">${ICO.folder}</div>
+    <div style="font-size:18px;font-weight:700;color:var(--txt);margin-bottom:8px;font-family:'Helvetica','Arial',sans-serif">Nenhum dado carregado</div>
+    <p style="color:var(--txt2);margin-bottom:22px;max-width:300px;margin-left:auto;margin-right:auto">Importe a planilha de agendamentos CSV para começar</p>
+    <label class="btn btn-p" style="cursor:pointer;display:inline-flex">
+      <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4z"/></svg>
+      Importar Planilha CSV
+      <input type="file" accept=".csv" style="display:none" onchange="importCSV(event)">
+    </label>
+  </div>`;
+}
+
+// ─── IMPORT ───────────────────────────────────────────────────────────────────
+// Chave de deduplicação por ID do paciente + data + hora (ignora variações de nome)
+function rowKey(r){
+  const raw=r['Paciente']||'';
+  const m=raw.match(/^(\d+)/);
+  const pid=m?m[1]:raw.trim().toLowerCase();
+  return `${pid}|${(r['Data do agendamento']||'').trim()}|${(r['Hora']||'').trim()}`;
+}
+
+function mergeRows(existing, incoming){
+  const seen=new Set(existing.map(rowKey));
+  let added=0;
+  incoming.forEach(r=>{
+    const k=rowKey(r);
+    if(k&&!seen.has(k)){ existing.push(r); seen.add(k); added++; }
+  });
+  return {merged:existing, added};
+}
+
+function importCSV(e){
+  const f=e.target.files[0]; if(!f) return;
+  const tryParse=(txt)=>{
+    try{
+      const newRows=parseCSV(txt);
+      if(newRows.length===0) return false;
+
+      // Load existing rows from localStorage
+      let existingRows=[];
+      try{ const s=localStorage.getItem('nc_rows'); if(s) existingRows=JSON.parse(s); }catch(ex){}
+
+      const isFirstImport=existingRows.length===0;
+      const {merged, added}=mergeRows(existingRows, newRows);
+
+      S.patients=buildPatients(merged);
+      try{ localStorage.setItem('nc_rows',JSON.stringify(merged)); }catch(ex){}
+      persist();
+      document.getElementById('pcnt').textContent=S.patients.length;
+      updateBdayCnt();
+
+      if(isFirstImport){
+        toast(`✅ ${S.patients.length} pacientes carregados`);
+      } else {
+        toast(`✅ ${added} novos registros adicionados · ${S.patients.length} pacientes no total`);
+      }
+      go(isFirstImport?'remarketing':'dashboard');
+      return true;
+    }catch(ex){ toast('❌ Erro: '+ex.message); console.error(ex); return false; }
+  };
+  const r1=new FileReader();
+  r1.onload=ev=>{
+    if(!tryParse(ev.target.result)){
+      const r2=new FileReader();
+      r2.onload=ev2=>tryParse(ev2.target.result);
+      r2.readAsText(f,'windows-1252');
+    }
+  };
+  r1.readAsText(f,'utf-8');
+}
+
+// ─── SEARCH ───────────────────────────────────────────────────────────────────
+function onSearch(v){
+  S.q=v.toLowerCase();
+  go(S.page);
+}
+
+function filt(pts){
+  let res=pts;
+  if(S.q){
+    res=res.filter(p=>
+      p.nome.toLowerCase().includes(S.q)||
+      p.tel.includes(S.q)||
+      p.cpf.includes(S.q)||
+      (p.last?.tipo||'').toLowerCase().includes(S.q)
+    );
+  }
+  if(S.period!=='all'){
+    const now=new Date();
+    res=res.filter(p=>{
+      if(!p.last?.data) return false;
+      const d=parseDate(p.last.data);
+      if(!d) return false;
+      const diff=(now-d)/864e5;
+      if(S.period==='30') return diff<=30;
+      if(S.period==='90') return diff<=90;
+      if(S.period==='180') return diff<=180;
+      if(S.period==='year') return d.getFullYear()===now.getFullYear();
+      return true;
+    });
+  }
+  return res;
+}
+
+function filtAtend(pts){
+  const all=pts.flatMap(p=>p.atend);
+  if(S.period==='all') return all;
+  const now=new Date();
+  return all.filter(a=>{
+    const d=parseDate(a.data);
+    if(!d) return false;
+    const diff=(now-d)/864e5;
+    if(S.period==='30') return diff<=30;
+    if(S.period==='90') return diff<=90;
+    if(S.period==='180') return diff<=180;
+    if(S.period==='year') return d.getFullYear()===now.getFullYear();
+    return true;
+  });
+}
+
+function togglePeriod(){
+  const el=document.getElementById('p-opts');
+  const trig=document.getElementById('p-trig');
+  if(!el || !trig) return;
+  const isOpen=el.style.display==='block';
+  el.style.display=isOpen?'none':'block';
+  trig.classList.toggle('open',!isOpen);
+}
+
+function setPeriod(v,lbl){
+  S.period=v;
+  const labelEl=document.getElementById('p-lbl');
+  if(labelEl) labelEl.textContent=lbl;
+  document.querySelectorAll('.c-sel-opt').forEach(opt=>opt.classList.toggle('active',opt.dataset.val===v));
+  const opts=document.getElementById('p-opts');
+  if(opts) opts.style.display='none';
+  const trig=document.getElementById('p-trig');
+  if(trig) trig.classList.remove('open');
+  go(S.page);
+}
+
+window.addEventListener('click',e=>{
+  if(!e.target.closest('.c-sel')){
+    const opts=document.getElementById('p-opts');
+    if(opts) opts.style.display='none';
+    const trig=document.getElementById('p-trig');
+    if(trig) trig.classList.remove('open');
+  }
+});
+
+function isBdayMonth(id){
+  const b=S.birthdates[id]; if(!b) return false;
+  const m=parseInt(b.split('/')[1]);
+  return m===(new Date().getMonth()+1);
+}
+function isBdayToday(id){
+  const b=S.birthdates[id]; if(!b) return false;
+  const now=new Date();
+  const [d,m]=b.split('/').map(Number);
+  return d===now.getDate() && m===(now.getMonth()+1);
+}
+
+// ─── ICON LIBRARY ─────────────────────────────────────────────────────────────
+const WA_SVG=`<svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
+const ICO={
+  users:   `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  check:   `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+  x:       `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+  warn:    `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  bell:    `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
+  trend:   `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
+  chart:   `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
+  clip:    `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>`,
+  msg:     `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+  send:    `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
+  star:    `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+  cal:     `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+  target:  `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+  award:   `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>`,
+  folder:  `<svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
+  upload:  `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>`,
+  phone:   `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.1 6.1l.94-.94a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+  syringe: `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><path d="M8.5 2.5l3 3-7 7-3-3z"/><path d="M15.5 9.5l-7 7"/><path d="M21.5 2.5l-3 3"/><path d="M18.5 5.5l-3-3"/><line x1="3" y1="21" x2="7" y2="17"/></svg>`,
+  sparkle: `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>`,
+  leaf:    `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 19.34A1 1 0 0 0 4.93 21C11 21 19 16 21 7c-2.5 2-4.5 2-8 1z"/><path d="M3.82 19.34C3 17 3 15 6 12"/></svg>`,
+  refresh: `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>`,
+  bubble:  `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/></svg>`,
+  joint:   `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></svg>`,
+  face:    `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>`,
+  pill:    `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M10.5 20.5 3.5 13.5a5 5 0 0 1 7.07-7.07l7 7a5 5 0 0 1-7.07 7.07z"/><line x1="8.5" y1="11.5" x2="15.5" y2="4.5"/></svg>`,
+  clock:   `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  sprout:  `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 1 1 4.1C13 10 11.9 9.1 11 7.4c1.3-.2 2.2-.1 3.1.6z"/></svg>`,
+  search:  `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+};
+
+// ─── ANIVERSÁRIOS PAGE ────────────────────────────────────────────────────────
+function renderBdaysPage(){
+  document.getElementById('view').innerHTML=`<div id="bday-section">${renderBdaySection()}</div>`;
+  updateBdayCnt();
+}
+
+function updateBdayCnt(){
+  const cnt=thisMonthBdays().length;
+  const el=document.getElementById('bday-cnt');
+  if(!el) return;
+  if(cnt>0){el.textContent=cnt;el.style.display='';}
+  else el.style.display='none';
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function renderBdaySection(){
+  const bdays=thisMonthBdays();
+  const now=new Date();
+  const monthName=now.toLocaleDateString('pt-BR',{month:'long'});
+  const cfg=S.voucherConfig;
+  const sentCount=bdays.filter(p=>{
+    const key=`${p.id}-${now.getFullYear()}-${now.getMonth()+1}`;
+    return S.vouchers[key]?.sent;
+  }).length;
+
+  const emptyMsg=`<div class="card" style="border:1px solid var(--bord2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div style="font-weight:600;color:var(--gold);font-size:14.5px">Aniversariantes de ${monthName}</div>
+      <div style="display:flex;gap:6px">
+        <button onclick="importBdays()" style="font-size:11px;padding:4px 10px;background:var(--surf2);border:1px solid var(--bord);border-radius:6px;cursor:pointer;color:var(--txt2)">Importar aniversários</button>
+        <button onclick="openVoucherConfig()" style="font-size:11px;padding:4px 10px;background:var(--surf2);border:1px solid var(--bord);border-radius:6px;cursor:pointer;color:var(--txt2)">Configurar desconto</button>
+      </div>
+    </div>
+    <div style="font-size:12.5px;color:var(--txt3);padding:4px 0">Nenhum aniversariante cadastrado este mês. Abra um paciente para adicionar a data de nascimento.</div>
+  </div>`;
+
+  if(bdays.length===0) return emptyMsg;
+
+  const todayList=bdays.filter(p=>{const[dd]=( S.birthdates[p.id]||'').split('/');return parseInt(dd)===now.getDate();});
+  const restList=bdays.filter(p=>{const[dd]=(S.birthdates[p.id]||'').split('/');return parseInt(dd)!==now.getDate();});
+
+  const renderRow=(p,isToday)=>{
+    const b=S.birthdates[p.id]||'';
+    const [dd,mm]=b.split('/');
+    const vkey=`${p.id}-${now.getFullYear()}-${now.getMonth()+1}`;
+    const voucher=S.vouchers[vkey]||genVoucher(p.id);
+    const sent=voucher.sent;
+    const msg=bdayMsg(p.nome,voucher);
+    const wu=p.tel?waUrl(p.tel,msg):'#';
+    const shortName=p.nome.split(' ').slice(0,3).join(' ');
+    return`<div id="bday-card-${p.id}" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;background:${isToday?'rgba(201,168,76,.08)':'transparent'};border:1px solid ${isToday?'rgba(201,168,76,.4)':sent?'rgba(16,185,129,.25)':'transparent'};transition:background .15s" onmouseover="this.style.background='${isToday?'rgba(201,168,76,.13)':'rgba(255,255,255,.03)'}'" onmouseout="this.style.background='${isToday?'rgba(201,168,76,.08)':'transparent'}'">
+      <div style="width:36px;height:36px;background:${isToday?'var(--gold)':'var(--surf3)'};border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;flex-shrink:0">
+        <div style="font-size:13px;font-weight:700;color:${isToday?'#111':'var(--gold)'};line-height:1">${dd}</div>
+        <div style="font-size:8px;color:${isToday?'#333':'var(--txt3)'};line-height:1.3;text-transform:uppercase">${new Date(2000,parseInt(mm)-1).toLocaleDateString('pt-BR',{month:'short'}).replace('.','')}</div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${shortName}${isToday?` <span style="font-size:10px;font-weight:600;color:var(--gold);background:rgba(201,168,76,.15);padding:1px 6px;border-radius:4px;vertical-align:middle">hoje</span>`:''}</div>
+        <div style="font-size:10.5px;color:var(--txt3);margin-top:1px">${p.tel||'Sem telefone'}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        <div style="font-family:monospace;font-size:12px;font-weight:700;color:var(--gold);letter-spacing:1px;background:var(--surf3);padding:4px 8px;border-radius:6px;border:1px dashed rgba(201,168,76,.3)">${voucher.code}</div>
+        <button onclick="copyTxt('${voucher.code}')" style="font-size:10px;padding:3px 7px;background:var(--surf2);border:1px solid var(--bord);border-radius:5px;cursor:pointer;color:var(--txt2);white-space:nowrap">Copiar</button>
+        ${p.tel?`<a href="${wu}" target="natuclinic_wa" class="btn btn-wa" style="padding:5px 10px;font-size:11px;gap:4px" onclick="markVoucherSent('${p.id}')">${WA_SVG} Enviar</a>`:''}
+        ${sent?`<span style="font-size:10px;color:#34D399;white-space:nowrap">Enviado</span>`:''}
+      </div>
+    </div>`;
+  };
+
+  return `<div class="card" style="border:1px solid rgba(201,168,76,.3)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-weight:600;color:var(--gold);font-size:14.5px">Aniversariantes de ${monthName}</div>
+        <div style="font-size:11.5px;color:var(--txt3);margin-top:2px">${bdays.length} paciente${bdays.length>1?'s':''} · ${sentCount} voucher${sentCount!==1?'s':''} enviado${sentCount!==1?'s':''} · Desconto: <b style="color:var(--gold)">${cfg.discount}</b></div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="importBdays()" style="font-size:11.5px;padding:5px 12px;background:var(--surf2);border:1px solid var(--bord);border-radius:7px;cursor:pointer;color:var(--txt2)">Importar aniversários</button>
+        <button onclick="openVoucherConfig()" style="font-size:11.5px;padding:5px 12px;background:var(--surf2);border:1px solid var(--bord);border-radius:7px;cursor:pointer;color:var(--txt2)">Configurar desconto</button>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      ${todayList.length?`<div style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:.8px;padding:2px 12px 6px;text-transform:uppercase">Hoje</div>${todayList.map(p=>renderRow(p,true)).join('')}<div style="height:1px;background:var(--bord);margin:8px 0"></div>`:''}
+      ${restList.length?`<div style="font-size:10px;font-weight:700;color:var(--txt3);letter-spacing:.8px;padding:2px 12px 6px;text-transform:uppercase">Este mês</div>${restList.map(p=>renderRow(p,false)).join('')}`:''}
+    </div>
+  </div>`;
+}
+
+function importBdays(){
+  const inp=document.createElement('input');
+  inp.type='file'; inp.accept='.csv';
+  inp.onchange=e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const tryImport=txt=>{
+      txt=txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+      const lines=txt.split('\n').filter(l=>l.trim());
+      if(lines.length<2){toast('❌ Arquivo inválido');return;}
+      const sep=lines[0].includes(';')?';':',';
+      const hdr=lines[0].split(sep).map(h=>h.trim());
+      const idCol=hdr.findIndex(h=>h==='ID Amigo'||h==='ID');
+      const bdCol=hdr.findIndex(h=>h.includes('Nasc'));
+      if(idCol<0||bdCol<0){toast('❌ Colunas "ID Amigo" e "Data Nasc." não encontradas');return;}
+      let ok=0,skip=0;
+      lines.slice(1).forEach(l=>{
+        const cols=l.split(sep).map(c=>c.trim());
+        const id=cols[idCol]; const raw=cols[bdCol];
+        if(!id||!raw) return;
+        const parts=raw.split('/');
+        if(parts.length<2) return;
+        const ddmm=parts[0].padStart(2,'0')+'/'+parts[1].padStart(2,'0');
+        if(!/^\d{2}\/\d{2}$/.test(ddmm)) return;
+        const patient=S.patients.find(p=>p.id===id);
+        if(!patient){skip++;return;}
+        S.birthdates[id]=ddmm; ok++;
+      });
+      persist();
+      refreshBdaySection();
+      toast(`✅ ${ok} aniversários importados · ${skip} IDs não encontrados na base`);
+    };
+    const r=new FileReader();
+    r.onload=ev=>{
+      const txt=ev.target.result;
+      if(txt.includes('Ã')||txt.includes('â€')){
+        const r2=new FileReader();
+        r2.onload=ev2=>tryImport(ev2.target.result);
+        r2.readAsText(f,'windows-1252');
+      } else { tryImport(txt); }
+    };
+    r.readAsText(f,'utf-8');
+  };
+  inp.click();
+}
+
+function openVoucherConfig(){
+  const cfg=S.voucherConfig;
+  openModal(`
+    <div class="modal-title" style="margin-bottom:18px">Configurar Voucher de Aniversario</div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:11.5px;color:var(--txt2);font-weight:600;margin-bottom:6px">PERCENTUAL DE DESCONTO</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${['5%','10%','15%','20%','25%','30%'].map(d=>`
+          <button onclick="S.voucherConfig.discount='${d}';persist();document.querySelectorAll('.disc-opt').forEach(b=>b.style.borderColor='var(--bord)');this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
+            class="disc-opt" style="padding:7px 14px;background:var(--surf3);border:1px solid ${cfg.discount===d?'var(--gold)':'var(--bord)'};border-radius:7px;cursor:pointer;color:${cfg.discount===d?'var(--gold)':'var(--txt2)'};font-size:13px;font-weight:600">${d}</button>
+        `).join('')}
+      </div>
+    </div>
+    <div style="margin-bottom:18px">
+      <div style="font-size:11.5px;color:var(--txt2);font-weight:600;margin-bottom:6px">OU VALOR PERSONALIZADO</div>
+      <input id="disc-custom" type="text" placeholder="Ex: 50 reais, Consulta gratis..."
+        value="${!['5%','10%','15%','20%','25%','30%'].includes(cfg.discount)?cfg.discount:''}"
+        style="width:100%;background:var(--surf3);border:1px solid var(--bord2);border-radius:7px;padding:8px 11px;color:var(--txt);font-size:13px;outline:none;box-sizing:border-box">
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="const v=document.getElementById('disc-custom').value.trim();if(v){S.voucherConfig.discount=v;persist();}refreshBdaySection();toast('Desconto salvo!');closeModal()" class="btn btn-wa" style="flex:1;justify-content:center">Salvar</button>
+      <button onclick="closeModal()" style="padding:8px 14px;background:var(--surf2);border:1px solid var(--bord);border-radius:7px;cursor:pointer;color:var(--txt2)">Cancelar</button>
+    </div>`);
+}
+
+function renderDash(){
+  const pts=filt(S.patients);
+  const all=filtAtend(S.patients);
+  const conf=all.filter(a=>a.status==='Confirmado').length;
+  const canc=all.filter(a=>a.status==='Cancelou').length;
+  const falt=all.filter(a=>a.status==='Faltou').length;
+  const nconf=all.filter(a=>(a.status||'').toLowerCase().includes('não confirmado')).length;
+  const taxa=all.length?((conf/all.length)*100).toFixed(1):0;
+
+  const tcount={};
+  all.forEach(a=>{ if(a.tipo) tcount[a.tipo]=(tcount[a.tipo]||0)+1; });
+  const topT=Object.entries(tcount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+
+  const mdata={};
+  all.forEach(a=>{
+    const d=parseDate(a.data); if(!d) return;
+    const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    mdata[k]=(mdata[k]||0)+1;
+  });
+  const months=Object.keys(mdata).sort().slice(-8);
+  const mlabels=months.map(m=>{const[y,mo]=m.split('-');return new Date(y,mo-1).toLocaleDateString('pt-BR',{month:'short',year:'2-digit'});});
+  const mvals=months.map(m=>mdata[m]);
+
+  const needRmk=pts.filter(p=>{
+    if(!p.last) return false;
+    const s=(p.last.status||'').toLowerCase();
+    return s==='cancelou'||s==='faltou'||daysSince(p.last.data)>120;
+  });
+
+  document.getElementById('view').innerHTML=`
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:22px">
+    ${kpi('users','Total Pacientes',pts.length.toLocaleString('pt-BR'),'Base de pacientes')}
+    ${kpi('check','Confirmados',conf.toLocaleString('pt-BR'),`Taxa ${taxa}%`)}
+    ${kpi('x','Cancelamentos',canc.toLocaleString('pt-BR'),`${((canc/(all.length||1))*100).toFixed(1)}% do total`)}
+    ${kpi('warn','Faltaram',falt.toLocaleString('pt-BR'),`${nconf} não confirmados`)}
+    ${kpi('bell','Precisa Contato',needRmk.length.toLocaleString('pt-BR'),'Remarketing urgente')}
+  </div>
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:18px">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:7px;font-weight:600;color:var(--txt);margin-bottom:14px;font-size:14px">${ICO.trend}<span>Atendimentos por Mês</span></div>
+      <div style="height:220px;position:relative"><canvas id="ch-month"></canvas></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:7px;font-weight:600;color:var(--txt);margin-bottom:14px;font-size:14px">${ICO.chart}<span>Status Geral</span></div>
+      <div style="height:220px;position:relative"><canvas id="ch-status"></canvas></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:7px;font-weight:600;color:var(--txt);margin-bottom:14px;font-size:14px">${ICO.clip}<span>Top Procedimentos</span></div>
+      ${topT.map(([t,c],i)=>`
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">
+        <span style="font-size:11px;color:var(--txt3);width:18px;text-align:right">${i+1}</span>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span style="font-size:12.5px;color:var(--txt);font-weight:500">${t}</span>
+            <span style="font-size:12.5px;font-weight:700;color:var(--gold)">${c}</span>
+          </div>
+          <div style="background:var(--surf3);height:5px;border-radius:3px">
+            <div style="background:${i===0?'var(--gold)':'rgba(201,168,76,.35)'};height:5px;border-radius:3px;width:${(c/topT[0][1]*100).toFixed(0)}%"></div>
+          </div>
+        </div>
+      </div>`).join('')}
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:7px;font-weight:600;color:var(--txt);font-size:14px">${ICO.send}<span>Remarketing Urgente</span></div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-s" style="padding:5px 10px;font-size:11px" onclick="go('kanban')">Kanban</button>
+          <button class="btn btn-s" style="padding:5px 10px;font-size:11px" onclick="go('remarketing')">Ver todos</button>
+        </div>
+      </div>
+      ${needRmk.slice(0,6).map(p=>{
+        const cat=rmkCat(p.last?.tipo,p.last?.status);
+        const tmpl=TMPLS[cat]; const msg=tmpl?tmpl.msg(p.nome):'';
+        return`<div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--bord)">
+          <div style="width:34px;height:34px;background:${tmpl?.cor||'var(--gold4)'};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:${(tmpl?.cor||'').startsWith('#')?'#000':'var(--txt)'};flex-shrink:0;border:1px solid rgba(255,255,255,.1);text-shadow:${(tmpl?.cor||'').startsWith('#')?'none':'0 1px 2px rgba(0,0,0,0.5)'}">${getInitials(p.nome)}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12.5px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nome}</div>
+            <div style="font-size:11px;color:var(--txt2)">${p.last?.tipo||''}</div>
+            <div style="font-size:10.5px;color:var(--txt3)">${fmtDateTime(p.last?.data,p.last?.hora)} · há ${timeAgo(p.last?.data)}</div>
+          </div>
+          ${p.tel?`<a href="${waUrl(p.tel,msg)}" target="natuclinic_wa" class="btn btn-wa" style="padding:4px 9px;font-size:11px" onclick="markSent('${p.id}')">${WA_SVG} WA</a>`:''}
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+  <div style="margin-top:18px">
+    ${(()=>{
+      const {comTel,rmkSentCnt,convertidos,fStages}=calcFunnelData();
+      return`<div class="card" style="border:1px solid rgba(201,168,76,.2)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--gold)">Funil de Remarketing</div>
+            <div style="font-size:11px;color:var(--txt3);margin-top:2px">Jornada dos pacientes da base até a conversão</div>
+          </div>
+          <button class="btn btn-s" style="padding:5px 10px;font-size:11.5px" onclick="go('funnel')">Ver detalhes</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center">
+          <div>${buildFunnelShapes(fStages,comTel,62,3)}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            ${fStages.map(s=>`<div style="background:${s.grad[1]}22;border:1px solid ${s.grad[0]}44;border-radius:8px;padding:10px">
+              <div style="font-size:9.5px;font-weight:700;color:${s.grad[0]};letter-spacing:.8px;margin-bottom:3px">${s.lbl}</div>
+              <div style="font-size:20px;font-weight:800;color:${s.grad[0]}">${s.val.toLocaleString('pt-BR')}</div>
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>`;
+    })()}
+  </div>`;
+
+  requestAnimationFrame(()=>{
+    const cm=document.getElementById('ch-month');
+    if(cm){ if(S.charts.m) S.charts.m.destroy();
+      S.charts.m=new Chart(cm,{type:'line',data:{labels:mlabels,datasets:[{label:'Atendimentos',data:mvals,borderColor:'#E8C96A',borderWidth:3,tension:.4,pointBackgroundColor:'#C9A84C',pointBorderColor:'#E8C96A',pointBorderWidth:2,pointRadius:4,pointHoverRadius:7,fill:true,backgroundColor:(ctx=>{const g=ctx.chart.ctx.createLinearGradient(0,0,0,220);g.addColorStop(0,'rgba(232,201,106,.55)');g.addColorStop(0.5,'rgba(201,168,76,.2)');g.addColorStop(1,'rgba(76,38,26,0)');return g;})}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1A1A1A',borderColor:'#C9A84C',borderWidth:1,titleColor:'#C9A84C',bodyColor:'#ccc'}},scales:{x:{grid:{display:false},ticks:{color:'#666',font:{size:10}}},y:{grid:{color:'rgba(201,168,76,.06)'},ticks:{color:'#666',font:{size:10}}}}}});
+    }
+    const cs=document.getElementById('ch-status');
+    if(cs){ if(S.charts.s) S.charts.s.destroy();
+      S.charts.s=new Chart(cs,{type:'doughnut',data:{labels:['Confirmado','Cancelou','Faltou','Não conf.'],datasets:[{data:[conf,canc,falt,nconf],backgroundColor:['#C9A84C','#E8C96A','rgba(201,168,76,.4)','#232323'],borderWidth:0}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:'#909090',font:{size:10},padding:10,boxWidth:10}}}}});
+    }
+  });
+}
+
+function kpi(ico,lbl,val,sub){
+  return`<div class="kpi">
+    <div class="kpi-ico">${ICO[ico]||''}</div>
+    <div class="kpi-lbl">${lbl}</div>
+    <div class="kpi-val">${val}</div>
+    <div class="kpi-sub">${sub}</div>
+  </div>`;
+}
+
+// ─── PATIENTS ─────────────────────────────────────────────────────────────────
+let pstFilter='all', pstPage=1;
+const PER_PAGE=50;
+
+function renderPats(pg){
+  if(pg!=null) pstPage=pg;
+  let pts=filt(S.patients);
+  if(pstFilter!=='all') pts=pts.filter(p=>(p.last?.status||'').toLowerCase()===pstFilter);
+  const tot=pts.length;
+  const totPg=Math.ceil(tot/PER_PAGE);
+  const slice=pts.slice((pstPage-1)*PER_PAGE,pstPage*PER_PAGE);
+
+  document.getElementById('view').innerHTML=`
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="padding:13px 18px;border-bottom:1px solid var(--bord);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div style="font-size:13px;color:var(--txt2)">${tot} pacientes</div>
+      <div class="seg" style="margin-left:auto">
+        ${['all','confirmado','cancelou','faltou'].map(s=>`
+          <button class="seg-b ${pstFilter===s?'on':''}" onclick="pstFilter='${s}';renderPats(1)">
+            ${s==='all'?'Todos':s.charAt(0).toUpperCase()+s.slice(1)}
+          </button>`).join('')}
+      </div>
+      <button class="btn btn-s" style="padding:7px 14px;font-size:12px" onclick="showAddLead()">+ Novo Lead</button>
+      <button class="btn btn-p" style="padding:7px 14px;font-size:12px" onclick="exportPats()">⬇ Exportar</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>Paciente</th><th>Telefone</th><th>Último Atend.</th><th>Tipo</th><th>Médico</th><th>Status</th><th>#</th><th>Ações</th>
+        </tr></thead>
+        <tbody>
+          ${slice.map(p=>{
+            const cat=rmkCat(p.last?.tipo,p.last?.status);
+            const tmpl=TMPLS[cat]; const msg=tmpl?tmpl.msg(p.nome):'';
+            const med=(p.last?.medico||'–').replace('Dr. Julimar de Meneses Barbosa','Dr. Julimar').replace('Dra. Débora Neres de Oliveira Meneses','Dra. Débora');
+            return`<tr onclick="showPat('${p.id}')" oncontextmenu="showCtxMenu(event,'${p.id}')" style="cursor:pointer">
+              <td><div style="font-weight:600">${p.nome}</div><div style="font-size:10.5px;color:var(--txt3)">${p.cpf||'–'}</div></td>
+              <td style="white-space:nowrap">${p.tel||'–'}</td>
+              <td style="white-space:nowrap;font-size:12.5px">${fmtDate(p.last?.data)}</td>
+              <td style="font-size:12px;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.last?.tipo||'–'}</td>
+              <td style="font-size:12px;color:var(--txt2)">${med}</td>
+              <td>${badge(p.last?.status)}</td>
+              <td style="text-align:center;font-weight:700;color:var(--gold)">${p.total}</td>
+              <td onclick="event.stopPropagation()">
+                ${p.tel?`<a href="${waUrl(p.tel,msg)}" target="natuclinic_wa" class="btn btn-wa" style="padding:4px 9px;font-size:11px" onclick="markSent('${p.id}')">${WA_SVG} WA</a>`:''}
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    ${totPg>1?`<div style="padding:10px 18px;border-top:1px solid var(--bord);display:flex;align-items:center;justify-content:center;gap:8px">
+      ${pstPage>1?`<button class="btn btn-s" style="padding:5px 11px;font-size:12px" onclick="renderPats(${pstPage-1})">← Ant</button>`:''}
+      <span style="font-size:12.5px;color:var(--txt2)">Página ${pstPage} / ${totPg}</span>
+      ${pstPage<totPg?`<button class="btn btn-s" style="padding:5px 11px;font-size:12px" onclick="renderPats(${pstPage+1})">Próx →</button>`:''}
+    </div>`:''}
+  </div>`;
+}
+
+// ─── CONTEXT MENU ─────────────────────────────────────────────────────────────
+document.addEventListener('click', ()=>closeCtxMenu());
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeCtxMenu(); });
+
+function closeCtxMenu(){ document.getElementById('ctx-menu').style.display='none'; }
+
+function showCtxMenu(e, id){
+  e.preventDefault();
+  e.stopPropagation();
+  const p=S.patients.find(x=>x.id===id); if(!p) return;
+  const cat=rmkCat(p.last?.tipo,p.last?.status);
+  const tmpl=TMPLS[cat]; const msg=tmpl?tmpl.msg(p.nome):'';
+  const wu=p.tel?waUrl(p.tel,msg):'';
+  const sent=S.rmkSent[id]||false;
+  const curStage=S.kanban[id]||'entrar';
+
+  const stageItems=S.stages
+    .filter(s=>s.id!==curStage)
+    .map(s=>`<div class="ctx-item" onclick="ctxMoveStage('${id}','${s.id}');closeCtxMenu()">
+      <span style="width:8px;height:8px;border-radius:50%;background:${s.dot};flex-shrink:0"></span>${s.label}
+    </div>`).join('');
+
+  document.getElementById('ctx-menu').innerHTML=`
+    <div style="padding:6px 12px 5px;font-size:11px;color:var(--txt3);font-weight:600;letter-spacing:.5px">${p.nome.split(' ')[0].toUpperCase()}</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" onclick="showPat('${id}');closeCtxMenu()">${ICO.users} Ver detalhes</div>
+    ${wu?`<a href="${wu}" target="natuclinic_wa" class="ctx-item" style="text-decoration:none" onclick="markSent('${id}');closeCtxMenu()">${WA_SVG} Enviar WhatsApp</a>`:''}
+    ${p.tel&&S.waConfig.enabled?`<div class="ctx-item" id="apibtn-${id}" onclick="sendViaAPI('${id}');closeCtxMenu()"><span style="color:#25D366;display:flex">${WA_SVG}</span> Enviar via API</div>`:''}
+    ${msg?`<div class="ctx-item" onclick="copyTxt(${JSON.stringify(msg)});closeCtxMenu()">${ICO.clip} Copiar mensagem</div>`:''}
+    <div class="ctx-sep"></div>
+    <div style="padding:4px 12px;font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.5px">MOVER PARA</div>
+    ${stageItems}
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" onclick="toggleSent('${id}',${!sent});closeCtxMenu()">
+      ${ICO.check} ${sent?'Desmarcar enviado':'Marcar como enviado'}
+    </div>
+    <div class="ctx-item danger" onclick="confirmDeletePat('${id}','${p.nome.replace(/'/g,"\\'")}');closeCtxMenu()">${ICO.x} Excluir lead</div>`;
+
+  const menu=document.getElementById('ctx-menu');
+  menu.style.display='block';
+  const x=Math.min(e.clientX, window.innerWidth-220);
+  const y=Math.min(e.clientY, window.innerHeight-menu.offsetHeight-10);
+  menu.style.left=x+'px';
+  menu.style.top=y+'px';
+}
+
+function ctxMoveStage(id, stageId){
+  S.kanban[id]=stageId;
+  persist();
+  const lbl=S.stages.find(s=>s.id===stageId)?.label||stageId;
+  toast('✅ Movido para '+lbl);
+  if(S.page==='kanban') renderKanban();
+  if(S.page==='patients') renderPats();
+}
+
+function showPat(id){
+  const p=S.patients.find(x=>x.id===id); if(!p) return;
+  const cat=rmkCat(p.last?.tipo,p.last?.status);
+  const tmpl=TMPLS[cat]; const msg=tmpl?tmpl.msg(p.nome):'';
+  const wu=p.tel?waUrl(p.tel,msg):'#';
+  const curStage=S.kanban[p.id]||'entrar';
+  const curStageLbl=S.stages.find(s=>s.id===curStage)?.label||curStage;
+  function fmtMsg(t){ return t.replace(/\*(.*?)\*/g,'<strong>$1</strong>').replace(/_(.*?)_/g,'<em>$1</em>').replace(/\n/g,'<br>'); }
+  openModal(`
+    <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:20px;position:relative">
+      <div style="width:54px;height:54px;background:var(--gold3);border:1.5px solid var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--gold);flex-shrink:0;letter-spacing:1px">${getInitials(p.nome)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="modal-title" style="margin-bottom:3px">${p.nome}</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-size:11.5px;color:var(--txt3)">ID ${p.id}</span>
+          <span style="font-size:11.5px;color:var(--txt3)">·</span>
+          <span style="font-size:11.5px;color:var(--txt2)">${p.total} atendimento${p.total!==1?'s':''}</span>
+          <span style="font-size:11.5px;color:var(--txt3)">·</span>
+          <span style="font-size:11px;background:var(--surf3);border:1px solid var(--bord2);border-radius:20px;padding:2px 9px;color:var(--txt2)">${curStageLbl}</span>
+        </div>
+      </div>
+      <button onclick="closeModal()" style="position:absolute;top:0;right:0;width:28px;height:28px;background:var(--surf3);border:1px solid var(--bord);border-radius:7px;cursor:pointer;color:var(--txt3);font-size:14px;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
+    </div>
+
+    <div class="lic-grid">
+      <div class="lic-card">
+        <div class="lic-ico">${ICO.phone}</div>
+        <div class="lic-det">
+          <div class="lic-lbl">Telefone</div>
+          <div class="lic-val">${p.tel||'—'}</div>
+        </div>
+      </div>
+      <div class="lic-card" style="flex:1.5">
+        <div class="lic-ico">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <div class="lic-det">
+          <div class="lic-lbl">E-mail</div>
+          <div class="lic-val" title="${p.email||''}">${p.email||'—'}</div>
+        </div>
+      </div>
+      <div class="lic-card">
+        <div class="lic-ico">🎂</div>
+        <div class="lic-det">
+          <div class="lic-lbl">Nascimento</div>
+          <div class="lic-val">
+            <input id="bday-input-${p.id}" type="text" placeholder="DD/MM" maxlength="5"
+              value="${S.birthdates[p.id]||''}"
+              oninput="this.value=this.value.replace(/[^0-9\/]/g,'').replace(/^(\d{2})(\d)/,'$1/$2')"
+              onblur="saveBday('${p.id}',this.value.match(/^\d{2}\/\d{2}$/)?this.value:'')">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:18px">
+      <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.6px;margin-bottom:8px">PIPELINE</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${S.stages.map(s=>{
+          const active=curStage===s.id;
+          return`<button onclick="S.kanban['${p.id}']='${s.id}';persist();document.querySelectorAll('.stage-pill-${p.id}').forEach(el=>{el.dataset.active='false';el.style.background='var(--surf3)';el.style.borderColor='var(--bord)';el.style.color='var(--txt2)'});this.dataset.active='true';this.style.background='var(--gold3)';this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
+            class="stage-pill-${p.id}"
+            data-active="${active}"
+            style="padding:5px 11px;border-radius:20px;border:1px solid ${active?'var(--gold)':'var(--bord)'};background:${active?'var(--gold3)':'var(--surf3)'};color:${active?'var(--gold)':'var(--txt2)'};font-size:11.5px;cursor:pointer;transition:all .15s">${s.label}</button>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div style="margin-bottom:18px">
+      <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.6px;margin-bottom:8px">HISTÓRICO</div>
+      <div style="border:1px solid var(--bord);border-radius:9px;overflow:hidden;max-height:200px;overflow-y:auto">
+        ${p.atend.length===0?`<div style="padding:18px;text-align:center;color:var(--txt3);font-size:12px">Nenhum atendimento registrado</div>`
+        :p.atend.map((a,i)=>`
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 13px;${i>0?'border-top:1px solid var(--bord)':''}">
+            <div style="font-size:11px;color:var(--txt3);width:72px;flex-shrink:0;font-variant-numeric:tabular-nums">${a.data}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12.5px;font-weight:500;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.tipo}</div>
+              <div style="font-size:10.5px;color:var(--txt3)">${(a.medico||'–').split(' ').slice(-1)[0]}</div>
+            </div>
+            ${badge(a.status)}
+          </div>`).join('')}
+      </div>
+    </div>
+
+    ${msg?`<div style="background:var(--surf3);border:1px solid var(--bord);border-radius:9px;padding:13px;margin-bottom:18px">
+      <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.6px;margin-bottom:8px">MENSAGEM SUGERIDA</div>
+      <div style="font-size:12.5px;color:var(--txt2);line-height:1.65">${fmtMsg(msg)}</div>
+    </div>`:''}
+
+    <div style="display:flex;gap:8px">
+      ${p.tel?`<a href="${wu}" target="natuclinic_wa" class="btn btn-wa" style="flex:1;justify-content:center">${WA_SVG} WhatsApp</a>`:''}
+      ${msg?`<button class="btn btn-s" style="flex:1;justify-content:center" onclick="copyTxt(${JSON.stringify(msg)})">${ICO.clip} Copiar Mensagem</button>`:''}
+      <button onclick="confirmDeletePat('${p.id}','${p.nome.replace(/'/g,"\\'")}')" style="padding:8px 12px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:7px;cursor:pointer;color:#F87171;font-size:12px;white-space:nowrap">${ICO.x} Excluir</button>
+    </div>`);
+}
+
+function confirmDeletePat(id, nome){
+  openModal(`
+    <div style="text-align:center;padding:10px 0">
+      <div style="font-size:32px;margin-bottom:12px;color:#F87171">${ICO.x}</div>
+      <div class="modal-title" style="margin-bottom:8px">Excluir paciente?</div>
+      <div style="font-size:13px;color:var(--txt2);margin-bottom:20px"><b style="color:var(--txt)">${nome}</b> será removido permanentemente do CRM.</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="deletePat('${id}')" style="flex:1;padding:10px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);border-radius:8px;cursor:pointer;color:#F87171;font-weight:600;font-size:13px">Sim, excluir</button>
+        <button onclick="closeModal()" class="btn btn-s" style="flex:1;justify-content:center">Cancelar</button>
+      </div>
+    </div>`);
+}
+
+function deletePat(id){
+  let rows=[];
+  try{ rows=JSON.parse(localStorage.getItem('nc_rows')||'[]'); }catch(e){}
+  // Remove all rows belonging to this patient
+  const filtered=rows.filter(r=>{
+    const raw=r['Paciente']||'';
+    const m=raw.match(/^(\d+)/);
+    return (m?m[1]:null)!==id;
+  });
+  localStorage.setItem('nc_rows',JSON.stringify(filtered));
+  // Clean up state
+  delete S.kanban[id];
+  delete S.rmkSent[id];
+  delete S.birthdates[id];
+  S.patients=buildPatients(filtered);
+  persist();
+  closeModal();
+  toast('🗑️ Paciente removido.');
+  if(S.page==='pats') renderPats(1);
+}
+
+function showAddLead(){
+  openModal(`
+    <div class="modal-title" style="margin-bottom:18px">Novo Lead</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div style="grid-column:1/-1">
+        <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.6px;margin-bottom:5px">NOME COMPLETO *</div>
+        <input id="lead-nome" type="text" placeholder="Ex: Maria Silva"
+          style="width:100%;background:var(--surf3);border:1px solid var(--bord2);border-radius:7px;padding:8px 11px;color:var(--txt);font-size:13px;outline:none;box-sizing:border-box">
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.6px;margin-bottom:5px">TELEFONE</div>
+        <input id="lead-tel" type="text" placeholder="(61) 99999-9999"
+          style="width:100%;background:var(--surf3);border:1px solid var(--bord2);border-radius:7px;padding:8px 11px;color:var(--txt);font-size:13px;outline:none;box-sizing:border-box">
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.6px;margin-bottom:5px">E-MAIL</div>
+        <input id="lead-email" type="email" placeholder="email@exemplo.com"
+          style="width:100%;background:var(--surf3);border:1px solid var(--bord2);border-radius:7px;padding:8px 11px;color:var(--txt);font-size:13px;outline:none;box-sizing:border-box">
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.6px;margin-bottom:5px">CPF</div>
+        <input id="lead-cpf" type="text" placeholder="000.000.000-00"
+          style="width:100%;background:var(--surf3);border:1px solid var(--bord2);border-radius:7px;padding:8px 11px;color:var(--txt);font-size:13px;outline:none;box-sizing:border-box">
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.6px;margin-bottom:5px">NASCIMENTO (DD/MM)</div>
+        <input id="lead-bday" type="text" placeholder="Ex: 15/03" maxlength="5"
+          oninput="this.value=this.value.replace(/[^0-9\/]/g,'').replace(/^(\d{2})(\d)/,'$1/$2')"
+          style="width:100%;background:var(--surf3);border:1px solid var(--bord2);border-radius:7px;padding:8px 11px;color:var(--txt);font-size:13px;outline:none;box-sizing:border-box">
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.6px;margin-bottom:5px">PROCEDIMENTO DE INTERESSE</div>
+        <input id="lead-proc" type="text" placeholder="Ex: Botox, Harmonização..."
+          style="width:100%;background:var(--surf3);border:1px solid var(--bord2);border-radius:7px;padding:8px 11px;color:var(--txt);font-size:13px;outline:none;box-sizing:border-box">
+      </div>
+    </div>
+    <div style="margin-bottom:18px">
+      <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.6px;margin-bottom:5px">OBSERVAÇÃO</div>
+      <textarea id="lead-obs" rows="2" placeholder="Como chegou até a clínica, interesse específico..."
+        style="width:100%;background:var(--surf3);border:1px solid var(--bord2);border-radius:7px;padding:8px 11px;color:var(--txt);font-size:13px;outline:none;resize:vertical;box-sizing:border-box"></textarea>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="saveNewLead()" class="btn btn-wa" style="flex:1;justify-content:center">Salvar Lead</button>
+      <button onclick="closeModal()" class="btn btn-s" style="flex:1;justify-content:center">Cancelar</button>
+    </div>`);
+  setTimeout(()=>document.getElementById('lead-nome')?.focus(),100);
+}
+
+function saveNewLead(){
+  const nome=document.getElementById('lead-nome').value.trim();
+  if(!nome){ toast('❌ Nome é obrigatório'); return; }
+  const tel=document.getElementById('lead-tel').value.trim();
+  const email=document.getElementById('lead-email').value.trim();
+  const cpf=document.getElementById('lead-cpf').value.trim();
+  const bday=document.getElementById('lead-bday').value.trim();
+  const proc=document.getElementById('lead-proc').value.trim()||'Lead';
+  const obs=document.getElementById('lead-obs').value.trim();
+  const leadId=String(Date.now());
+  const today=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const newRow={
+    'Paciente':`${leadId} - ${nome}`,
+    'CPF':cpf,'Telefone':tel,'Email':email,
+    'Data do agendamento':today,'Hora':'',
+    'Tipo de Atendimento':proc,
+    'Status':obs||'Lead',
+    'Médico':'','_manual':true
+  };
+  let rows=[];
+  try{ rows=JSON.parse(localStorage.getItem('nc_rows')||'[]'); }catch(e){}
+  rows.unshift(newRow);
+  localStorage.setItem('nc_rows',JSON.stringify(rows));
+  S.kanban[leadId]='entrar';
+  if(bday&&bday.match(/^\d{2}\/\d{2}$/)) S.birthdates[leadId]=bday;
+  S.patients=buildPatients(rows);
+  persist();
+  closeModal();
+  toast('✅ Lead adicionado!');
+  renderPats(1);
+}
+
+function exportPats(){
+  let csv='Nome;Telefone;Email;CPF;Ultimo Atendimento;Tipo;Status;Total\n';
+  filt(S.patients).forEach(p=>{
+    csv+=`"${p.nome}";"${p.tel}";"${p.email}";"${p.cpf}";"${p.last?.data||''}";"${p.last?.tipo||''}";"${p.last?.status||''}";"${p.total}"\n`;
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download='pacientes_natuclinic.csv'; a.click();
+  toast('✅ Exportado!');
+}
+
+// ─── REMARKETING ──────────────────────────────────────────────────────────────
+function renderRmk(){
+  const cats=Object.keys(TMPLS);
+  // Exclui pacientes marcados como "Não Contatar" no kanban
+  let pts=filt(S.patients).filter(p=>(S.kanban[p.id]||'entrar')!=='nao').map(p=>({...p,cat:rmkCat(p.last?.tipo,p.last?.status),dias:daysSince(p.last?.data)}));
+  const catCounts={}; pts.forEach(p=>{catCounts[p.cat]=(catCounts[p.cat]||0)+1;});
+  const filtered=S.rmkFilter==='all'?pts:pts.filter(p=>p.cat===S.rmkFilter);
+  filtered.sort((a,b)=>{
+    const sa=S.rmkSent[a.id]?1:0, sb=S.rmkSent[b.id]?1:0;
+    if(sa!==sb) return sa-sb;
+    return b.dias-a.dias;
+  });
+  const sentCount=Object.values(S.rmkSent).filter(Boolean).length;
+  const total=pts.length;
+  const pct=total>0?((sentCount/total)*100).toFixed(1):0;
+
+  document.getElementById('view').innerHTML=`
+  <div style="display:flex;gap:18px">
+    <div style="width:210px;flex-shrink:0">
+      <div class="card" style="padding:14px;margin-bottom:12px">
+        <div style="font-weight:600;color:var(--gold);font-size:12.5px;margin-bottom:10px">Filtrar por Categoria</div>
+        <div class="nav-item" style="padding:7px 9px;border-radius:7px;color:${S.rmkFilter==='all'?'var(--gold)':'var(--txt2)'};font-weight:${S.rmkFilter==='all'?600:400};background:${S.rmkFilter==='all'?'var(--gold3)':'none'}" onclick="S.rmkFilter='all';renderRmk()">
+          ${ICO.search} Todos <span style="margin-left:auto;font-size:11px">${total}</span>
+        </div>
+        ${cats.map(cat=>{
+          const tmpl=TMPLS[cat]; const cnt=catCounts[cat]||0;
+          if(!cnt) return '';
+          return`<div class="nav-item" style="padding:7px 9px;border-radius:7px;color:${S.rmkFilter===cat?'var(--gold)':'var(--txt2)'};font-weight:${S.rmkFilter===cat?600:400};background:${S.rmkFilter===cat?'var(--gold3)':'none'}" onclick="S.rmkFilter='${cat}';renderRmk()">
+            ${(cat==='cancelou'||cat==='faltou')?(ICO[tmpl.icon]||''):''} ${tmpl.label} <span style="margin-left:auto;font-size:11px">${cnt}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="card" style="padding:14px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:12.5px;font-weight:600;color:var(--gold)">API WhatsApp</div>
+          <span style="font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;${S.waConfig.enabled?'background:rgba(37,211,102,.12);color:#25D366':'background:var(--surf3);color:var(--txt3)'}">${S.waConfig.enabled?'Ativo':'Inativo'}</span>
+        </div>
+        ${S.waConfig.enabled?`<div style="font-size:11px;color:var(--txt3);margin-bottom:9px">Número: <span style="color:var(--txt2)">...${S.waConfig.phoneNumberId.slice(-6)}</span><br>Template: <span style="color:var(--txt2)">${S.waConfig.templateName}</span></div>`:`<div style="font-size:11px;color:var(--txt3);margin-bottom:9px;line-height:1.5">Configure para enviar mensagens diretamente pelo CRM sem abrir o WhatsApp.</div>`}
+        <button onclick="showWaConfig()" class="btn btn-s" style="width:100%;justify-content:center;font-size:11.5px;padding:6px">${S.waConfig.enabled?'Reconfigurar':'Configurar API'}</button>
+      </div>
+      <div class="card" style="padding:14px">
+        <div style="font-size:12.5px;font-weight:600;color:var(--gold);margin-bottom:7px">📊 Progresso</div>
+        <div style="font-size:26px;font-weight:700;color:var(--gold)">${sentCount}</div>
+        <div style="font-size:11.5px;color:var(--txt2);margin-bottom:7px">de ${total} pacientes</div>
+        <div style="background:var(--surf3);height:5px;border-radius:3px;margin-bottom:4px">
+          <div style="background:#25D366;height:5px;border-radius:3px;width:${pct}%;transition:width 1s"></div>
+        </div>
+        <div style="font-size:11px;color:var(--txt3)">${pct}% enviado</div>
+        <button class="btn btn-s" style="width:100%;margin-top:10px;padding:6px;font-size:11.5px;justify-content:center" onclick="S.rmkSent={};persist();renderRmk()">Resetar</button>
+      </div>
+    </div>
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:13px;color:var(--txt2)">${filtered.length} pacientes · ${filtered.filter(p=>!S.rmkSent[p.id]).length} pendentes</div>
+        <button class="btn btn-s" style="padding:6px 12px;font-size:12px" onclick="markAllSent()">✅ Marcar todos enviados</button>
+      </div>
+      <div id="rmk-list">
+        ${filtered.length===0?`<div class="empty"><div class="empty-ico">🎉</div><div style="font-weight:700;color:var(--gold);font-size:16px">Nenhum paciente aqui!</div></div>`
+        :filtered.map(p=>{
+          const tmpl=TMPLS[p.cat]; const msg=tmpl?tmpl.msg(p.nome):'';
+          const sent=S.rmkSent[p.id]||false;
+          const wu=p.tel?waUrl(p.tel,msg):'#';
+          const dBadge=p.dias>365?'<span class="badge bx">+1 ano</span>':p.dias>180?'<span class="badge bf">+6 m</span>':p.dias>90?'<span class="badge" style="background:var(--gold3);color:var(--gold)">+3 m</span>':'';
+          return`<div class="rm-card ${sent?'sent':''}" id="rc-${p.id}" oncontextmenu="showCtxMenu(event,'${p.id}')" style="cursor:context-menu">
+            <div style="width:42px;height:42px;background:${tmpl?.cor||'var(--gold4)'};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:${(tmpl?.cor||'').startsWith('#')?'#000':'var(--txt)'};flex-shrink:0;border:1px solid rgba(255,255,255,.1);text-shadow:${(tmpl?.cor||'').startsWith('#')?'none':'0 1px 2px rgba(0,0,0,0.5)'}">${getInitials(p.nome)}</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:2px">
+                <span style="font-size:13.5px;font-weight:600;color:var(--txt)">${p.nome}</span>
+                ${badge(p.last?.status)} ${dBadge}
+                ${sent?'<span style="font-size:10px;color:#34D399;font-weight:600">✓ Enviado</span>':''}
+              </div>
+              <div style="font-size:11.5px;color:var(--txt2)">${p.last?.tipo||'–'}</div>
+              <div style="font-size:11px;color:var(--txt3);margin-top:2px"><b style="color:var(--txt2)">${fmtDateTime(p.last?.data,p.last?.hora)}</b> · <span style="color:${p.dias>180?'#F87171':p.dias>90?'#FBBF24':'var(--txt2)'}">há ${timeAgo(p.last?.data)}</span></div>
+              <div style="font-size:11px;color:var(--txt3)">${p.tel||'Sem telefone'}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0">
+              ${p.tel?`<a href="${wu}" target="natuclinic_wa" class="btn btn-wa" style="padding:5px 9px;font-size:11.5px" onclick="markSent('${p.id}')">${WA_SVG} Enviar WA</a>`:'<span style="font-size:11px;color:var(--txt3)">Sem tel.</span>'}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function markSent(id){
+  S.rmkSent[id]=true;
+  // Advance kanban: move to 2nd stage if currently in 1st (only move forward)
+  if(S.stages.length>=2){
+    const firstId=S.stages[0].id;
+    const secondId=S.stages[1].id;
+    const cur=S.kanban[id]||firstId;
+    const curIdx=S.stages.findIndex(s=>s.id===cur);
+    if(curIdx<=0) S.kanban[id]=secondId;
+  }
+  persist();
+  document.getElementById(`rc-${id}`)?.classList.add('sent');
+  // Visual feedback on the badge
+  const badge=document.querySelector(`#rc-${id} .kanban-moved`);
+  if(!badge){
+    const el=document.getElementById(`rc-${id}`);
+    if(el){
+      const tag=document.createElement('span');
+      tag.className='kanban-moved';
+      tag.style.cssText='font-size:10.5px;color:#1E40AF;background:#DBEAFE;border-radius:4px;padding:2px 7px;margin-left:6px';
+      tag.textContent='📋 Kanban: Em Contato';
+      const nameEl=el.querySelector('span[style*="font-weight:600"]');
+      if(nameEl) nameEl.after(tag);
+    }
+  }
+}
+function toggleSent(id,v){ S.rmkSent[id]=v; persist(); document.getElementById(`rc-${id}`)?.classList.toggle('sent',v); }
+function markAllSent(){
+  document.querySelectorAll('[id^="rc-"]').forEach(el=>{ S.rmkSent[el.id.slice(3)]=true; el.classList.add('sent'); });
+  persist(); toast('✅ Todos marcados como enviados');
+}
+
+// ─── WHATSAPP API ─────────────────────────────────────────────────────────────
+async function sendViaAPI(patientId){
+  const p=S.patients.find(x=>x.id===patientId);
+  if(!p||!p.tel) return toast('Paciente sem telefone cadastrado');
+  const phone=p.tel.replace(/\D/g,'');
+  const fullPhone=phone.startsWith('55')?phone:'55'+phone;
+  const btn=document.getElementById('apibtn-'+patientId);
+  if(btn){ btn.disabled=true; btn.textContent='Enviando...'; }
+  try{
+    const isTest=(S.waConfig.templateName||'hello_world')==='hello_world';
+    const firstName=p.nome.trim().split(' ')[0];
+    const tmplBody={
+      name:S.waConfig.templateName||'hello_world',
+      language:{code:isTest?'en_US':'pt_BR'}
+    };
+    if(!isTest) tmplBody.components=[{type:'body',parameters:[{type:'text',text:firstName}]}];
+
+    const {data,error}=await SB.functions.invoke('dynamic-responder',{
+      body:{to:fullPhone,token:S.waConfig.token,phoneNumberId:S.waConfig.phoneNumberId,templateName:S.waConfig.templateName||'hello_world',patientName:p.nome}
+    });
+    if(error) throw new Error(error.message||JSON.stringify(error));
+    if(!data?.ok) throw new Error(data?.data?.error?.message||data?.error||`Erro ${data?.status}`);
+    markSent(patientId);
+    toast('✅ Mensagem enviada via API WhatsApp!');
+  }catch(e){
+    console.error('WA API error:',e);
+    toast('❌ '+e.message);
+    if(btn){ btn.disabled=false; btn.textContent='Enviar API'; }
+  }
+}
+
+function showWaConfig(){
+  const cfg=S.waConfig;
+  openModal(`
+    <div class="modal-title" style="margin-bottom:18px">Configurar WhatsApp API</div>
+    <div style="margin-bottom:13px">
+      <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.6px;margin-bottom:5px">PHONE NUMBER ID</div>
+      <input id="wa-pid" type="text" value="${cfg.phoneNumberId||''}" placeholder="ex: 1040377785833990"
+        style="width:100%;background:var(--surf3);border:1px solid var(--bord2);border-radius:7px;padding:8px 11px;color:var(--txt);font-size:13px;outline:none">
+    </div>
+    <div style="margin-bottom:13px">
+      <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.6px;margin-bottom:5px">TOKEN DE ACESSO</div>
+      <textarea id="wa-tok" rows="3" placeholder="EAASes..."
+        style="width:100%;background:var(--surf3);border:1px solid var(--bord2);border-radius:7px;padding:8px 11px;color:var(--txt);font-size:11.5px;outline:none;resize:vertical;font-family:monospace">${cfg.token||''}</textarea>
+      <div style="font-size:10.5px;color:var(--txt3);margin-top:4px">Token temporário — regenere no Meta for Developers quando expirar.</div>
+    </div>
+    <div style="margin-bottom:18px">
+      <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.6px;margin-bottom:5px">NOME DO TEMPLATE</div>
+      <input id="wa-tmpl" type="text" value="${cfg.templateName||'hello_world'}" placeholder="hello_world"
+        style="width:100%;background:var(--surf3);border:1px solid var(--bord2);border-radius:7px;padding:8px 11px;color:var(--txt);font-size:13px;outline:none">
+      <div style="font-size:10.5px;color:var(--txt3);margin-top:4px">Para testes use <b style="color:var(--txt2)">hello_world</b>. Para produção, o nome do template aprovado em português.</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="saveWaConfig()" class="btn btn-wa" style="flex:1;justify-content:center">Salvar</button>
+      <button onclick="closeModal()" class="btn btn-s" style="flex:1;justify-content:center">Cancelar</button>
+    </div>`);
+}
+
+function saveWaConfig(){
+  const pid=document.getElementById('wa-pid').value.trim();
+  const tok=document.getElementById('wa-tok').value.trim();
+  const tmpl=document.getElementById('wa-tmpl').value.trim()||'hello_world';
+  S.waConfig={token:tok, phoneNumberId:pid, templateName:tmpl, enabled:!!(tok&&pid)};
+  persist();
+  closeModal();
+  renderRmk();
+  toast(S.waConfig.enabled?'✅ API WhatsApp configurada!':'⚠️ Preencha token e Phone Number ID');
+}
+
+// ─── KANBAN ───────────────────────────────────────────────────────────────────
+const STAGE_COLORS=['#5A6080','#4A7FA5','#B8965A','#7C6A3E','#4A9E7A','#7A3A3A','#8B5CF6','#EC4899','#F59E0B','#06B6D4','#10B981','#EF4444'];
+
+function showStageConfig(){
+  function renderRows(stages){
+    return stages.map((s,i)=>`
+      <div id="srow-${i}" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bord)">
+        <div style="position:relative">
+          <div onclick="toggleColorPicker(${i})" style="width:18px;height:18px;border-radius:50%;background:${s.dot};cursor:pointer;flex-shrink:0;border:2px solid rgba(255,255,255,.15)"></div>
+          <div id="cp-${i}" style="display:none;position:absolute;top:24px;left:0;background:var(--surf2);border:1px solid var(--bord2);border-radius:8px;padding:7px;z-index:100;display:none;flex-wrap:wrap;gap:5px;width:152px">
+            ${STAGE_COLORS.map(c=>`<div onclick="pickColor(${i},'${c}')" style="width:20px;height:20px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${s.dot===c?'#fff':'transparent'}"></div>`).join('')}
+          </div>
+        </div>
+        <input id="slbl-${i}" value="${s.label}" style="flex:1;background:var(--surf3);border:1px solid var(--bord2);border-radius:6px;padding:6px 9px;color:var(--txt);font-size:13px;outline:none">
+        <button onclick="moveStage(${i},-1)" ${i===0?'disabled':''} style="width:26px;height:26px;background:var(--surf3);border:1px solid var(--bord);border-radius:5px;cursor:pointer;color:var(--txt2);font-size:13px;${i===0?'opacity:.3':''}">↑</button>
+        <button onclick="moveStage(${i},1)" ${i===stages.length-1?'disabled':''} style="width:26px;height:26px;background:var(--surf3);border:1px solid var(--bord);border-radius:5px;cursor:pointer;color:var(--txt2);font-size:13px;${i===stages.length-1?'opacity:.3':''}">↓</button>
+        <button onclick="removeStage(${i})" ${stages.length<=1?'disabled':''} style="width:26px;height:26px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:5px;cursor:pointer;color:#F87171;font-size:13px;${stages.length<=1?'opacity:.3':''}">✕</button>
+      </div>`).join('');
+  }
+  window._cfgStages=S.stages.map(s=>({...s}));
+  openModal(`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="modal-title">Configurar Etapas</div>
+      <button onclick="resetStages()" style="font-size:11px;color:var(--txt3);background:none;border:none;cursor:pointer;text-decoration:underline">Restaurar padrão</button>
+    </div>
+    <div id="stage-rows">${renderRows(window._cfgStages)}</div>
+    <button onclick="addStage()" class="btn btn-s" style="width:100%;justify-content:center;margin-top:12px;padding:8px">+ Adicionar Etapa</button>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button onclick="saveStageConfig()" class="btn btn-wa" style="flex:1;justify-content:center">Salvar</button>
+      <button onclick="closeModal()" class="btn btn-s" style="flex:1;justify-content:center">Cancelar</button>
+    </div>`);
+}
+
+function toggleColorPicker(i){
+  const el=document.getElementById('cp-'+i);
+  if(!el) return;
+  el.style.display=el.style.display==='none'?'flex':'none';
+}
+function pickColor(i,color){
+  window._cfgStages[i].dot=color;
+  document.getElementById('cp-'+i).style.display='none';
+  document.querySelector(`#srow-${i} div[onclick]`).style.background=color;
+  document.querySelectorAll(`#cp-${i} div`).forEach(d=>d.style.border=`2px solid ${d.style.background===color?'#fff':'transparent'}`);
+}
+function moveStage(i,dir){
+  syncStageInputs();
+  const arr=window._cfgStages;
+  const j=i+dir;
+  if(j<0||j>=arr.length) return;
+  [arr[i],arr[j]]=[arr[j],arr[i]];
+  document.getElementById('stage-rows').innerHTML=renderStageRows(arr);
+}
+function removeStage(i){
+  syncStageInputs();
+  if(window._cfgStages.length<=1) return;
+  const removed=window._cfgStages.splice(i,1)[0];
+  // Move patients in removed stage to first remaining stage
+  const fallback=window._cfgStages[0].id;
+  Object.keys(S.kanban).forEach(pid=>{ if(S.kanban[pid]===removed.id) S.kanban[pid]=fallback; });
+  document.getElementById('stage-rows').innerHTML=renderStageRows(window._cfgStages);
+}
+function addStage(){
+  syncStageInputs();
+  window._cfgStages.push({id:'s_'+Date.now(),label:'Nova Etapa',dot:'#5A6080',ico:'msg'});
+  document.getElementById('stage-rows').innerHTML=renderStageRows(window._cfgStages);
+}
+function syncStageInputs(){
+  window._cfgStages.forEach((s,i)=>{
+    const inp=document.getElementById('slbl-'+i);
+    if(inp) s.label=inp.value.trim()||s.label;
+  });
+}
+function renderStageRows(stages){
+  return stages.map((s,i)=>`
+    <div id="srow-${i}" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bord)">
+      <div style="position:relative">
+        <div onclick="toggleColorPicker(${i})" style="width:18px;height:18px;border-radius:50%;background:${s.dot};cursor:pointer;flex-shrink:0;border:2px solid rgba(255,255,255,.15)"></div>
+        <div id="cp-${i}" style="display:none;position:absolute;top:24px;left:0;background:var(--surf2);border:1px solid var(--bord2);border-radius:8px;padding:7px;z-index:100;flex-wrap:wrap;gap:5px;width:152px">
+          ${STAGE_COLORS.map(c=>`<div onclick="pickColor(${i},'${c}')" style="width:20px;height:20px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${s.dot===c?'#fff':'transparent'}"></div>`).join('')}
+        </div>
+      </div>
+      <input id="slbl-${i}" value="${s.label}" style="flex:1;background:var(--surf3);border:1px solid var(--bord2);border-radius:6px;padding:6px 9px;color:var(--txt);font-size:13px;outline:none">
+      <button onclick="moveStage(${i},-1)" ${i===0?'disabled':''} style="width:26px;height:26px;background:var(--surf3);border:1px solid var(--bord);border-radius:5px;cursor:pointer;color:var(--txt2);font-size:13px;${i===0?'opacity:.3':''}">↑</button>
+      <button onclick="moveStage(${i},1)" ${i===stages.length-1?'disabled':''} style="width:26px;height:26px;background:var(--surf3);border:1px solid var(--bord);border-radius:5px;cursor:pointer;color:var(--txt2);font-size:13px;${i===stages.length-1?'opacity:.3':''}">↓</button>
+      <button onclick="removeStage(${i})" ${stages.length<=1?'disabled':''} style="width:26px;height:26px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:5px;cursor:pointer;color:#F87171;font-size:13px;${stages.length<=1?'opacity:.3':''}">✕</button>
+    </div>`).join('');
+}
+function saveStageConfig(){
+  syncStageInputs();
+  S.stages=window._cfgStages.filter(s=>s.label);
+  persist();
+  closeModal();
+  toast('✅ Etapas salvas!');
+  renderKanban();
+}
+function resetStages(){
+  window._cfgStages=JSON.parse(JSON.stringify(DEFAULT_STAGES));
+  document.getElementById('stage-rows').innerHTML=renderStageRows(window._cfgStages);
+}
+
+let dragId=null;
+
+function renderKanban(){
+  let pts=filt(S.patients);
+  if(S.kbBdayOnly) pts=pts.filter(p=>isBdayMonth(p.id));
+  const grp={};
+  S.stages.forEach(s=>grp[s.id]=[]);
+  const firstId=S.stages[0]?.id;
+  pts.forEach(p=>{ const st=S.kanban[p.id]||p.stage||firstId; if(grp[st]) grp[st].push(p); else if(firstId&&grp[firstId]) grp[firstId].push(p); });
+
+  document.getElementById('view').innerHTML=`
+  <div style="margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <button class="btn ${S.kbBdayOnly?'btn-p':'btn-s'}" onclick="S.kbBdayOnly=!S.kbBdayOnly;renderKanban()" style="padding:6px 12px;font-size:12px;height:32px">
+      🎂 ${S.kbBdayOnly?'Mostrando Aniversariantes':'Aniversariantes do Mês'}
+    </button>
+    <button class="btn btn-s" onclick="showStageConfig()" style="padding:6px 12px;font-size:12px;height:32px;margin-left:auto">${ICO.clip} Configurar Etapas</button>
+    <div style="width:1px;height:20px;background:var(--bord);margin:0 5px"></div>
+    ${S.stages.map(s=>`<div style="background:var(--surf2);border-radius:6px;padding:5px 11px;font-size:12.5px;border:1px solid var(--bord);display:flex;align-items:center;gap:6px;height:32px;box-sizing:border-box">
+      <span style="color:${s.dot};display:flex">${ICO[s.ico]||''}</span><b style="color:var(--txt)">${(grp[s.id]||[]).length}</b> <span style="color:var(--txt2)">${s.label}</span>
+    </div>`).join('')}
+  </div>
+  <div class="kb-scroll-top" id="kb-scroll-top"><div id="kb-scroll-inner" style="height:1px"></div></div>
+  <div class="kb-board" id="kb-board">
+    ${S.stages.map(st=>`
+      <div class="kb-col" id="kc-${st.id}"
+        style="${st.id==='nao'?'opacity:.7;border-color:rgba(180,60,60,.35);background:rgba(60,15,15,.5)':''}"
+        ondragover="event.preventDefault();kbOver(event,'${st.id}')"
+        ondrop="kbDrop(event,'${st.id}')"
+        ondragleave="kbLeave(event)">
+        <div class="kb-hd">
+          <span style="display:flex;align-items:center;gap:5px;color:${st.dot}">${ICO[st.ico]||''}<span style="color:var(--txt2)">${st.label}</span></span>
+          <div style="display:flex;align-items:center;gap:5px">
+            <span class="kb-cnt">${(grp[st.id]||[]).length}</span>
+            ${(st.id==='entrar'||st.id==='contato')?`<button onclick="go('remarketing')" title="Abrir Remarketing" style="background:#DBEAFE;border:none;border-radius:4px;padding:2px 6px;font-size:10px;color:#1E40AF;cursor:pointer;font-weight:600">📢 WA</button>`:''}
+          </div>
+        </div>
+        ${(grp[st.id]||[]).slice(0,25).map(p=>kbCard(p)).join('')}
+        ${(grp[st.id]||[]).length>25?`<div style="text-align:center;font-size:11.5px;color:var(--txt2);padding:6px">+${(grp[st.id]||[]).length-25} mais</div>`:''}
+      </div>`).join('')}
+  </div>`;
+  // sync top scrollbar with board
+  requestAnimationFrame(()=>{
+    const bar=document.getElementById('kb-scroll-top');
+    const board=document.getElementById('kb-board');
+    const inner=document.getElementById('kb-scroll-inner');
+    if(!bar||!board||!inner) return;
+    inner.style.width=board.scrollWidth+'px';
+    let syncing=false;
+    bar.addEventListener('scroll',()=>{ if(!syncing){syncing=true;board.scrollLeft=bar.scrollLeft;syncing=false;} });
+    board.addEventListener('scroll',()=>{ if(!syncing){syncing=true;bar.scrollLeft=board.scrollLeft;syncing=false;} });
+  });
+}
+
+function kbCard(p){
+  const cat=rmkCat(p.last?.tipo,p.last?.status);
+  const tmpl=TMPLS[cat]; const msg=tmpl?tmpl.msg(p.nome):'';
+  const wu=p.tel?waUrl(p.tel,msg):'#';
+  const bday=isBdayToday(p.id);
+  const bmonth=isBdayMonth(p.id);
+  return`<div class="kb-card" draggable="true" id="kk-${p.id}"
+    ondragstart="kbStart(event,'${p.id}')" ondragend="kbEnd(event)"
+    oncontextmenu="showCtxMenu(event,'${p.id}')">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px">
+      <div style="font-size:12.5px;font-weight:600;color:var(--txt);flex:1">${p.nome.split(' ').slice(0,3).join(' ')}</div>
+      ${bday?`<span title="Aniversário HOJE!" style="font-size:14px;margin-top:-2px">🎂</span>`:bmonth?`<span title="Aniversariante do Mês" style="font-size:11px;opacity:.6;margin-top:1px">🎂</span>`:''}
+    </div>
+    <div style="font-size:11px;color:var(--txt2);margin-bottom:6px">${(p.last?.tipo||'–').substring(0,40)}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:10.5px;color:var(--txt3)">${fmtDate(p.last?.data)}</div>
+      ${badge(p.last?.status)}
+    </div>
+    ${p.tel?`<div style="margin-top:7px;padding-top:7px;border-top:1px solid var(--bord);display:flex;gap:5px">
+      <a href="${wu}" target="natuclinic_wa" class="btn btn-wa" style="flex:1;justify-content:center;padding:4px;font-size:10.5px" onclick="markSent('${p.id}')">${WA_SVG} WA</a>
+      <button onclick="showPat('${p.id}')" style="flex:1;font-size:10.5px;padding:4px;background:var(--surf2);border:1px solid var(--bord);border-radius:5px;cursor:pointer;color:var(--txt2)">Ver</button>
+    </div>`:''}
+  </div>`;
+}
+
+function kbStart(e,id){ dragId=id; setTimeout(()=>document.getElementById(`kk-${id}`)?.classList.add('drag'),0); e.dataTransfer.setData('text/plain',id); }
+function kbEnd(e){ if(dragId) document.getElementById(`kk-${dragId}`)?.classList.remove('drag'); document.querySelectorAll('.kb-col').forEach(c=>c.classList.remove('dov')); dragId=null; }
+function kbOver(e,sid){ e.preventDefault(); document.querySelectorAll('.kb-col').forEach(c=>c.classList.remove('dov')); document.getElementById(`kc-${sid}`)?.classList.add('dov'); }
+function kbLeave(e){ if(!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.classList.remove('dov'); }
+function kbDrop(e,sid){
+  e.preventDefault();
+  const id=e.dataTransfer.getData('text/plain')||dragId;
+  if(!id) return;
+  S.kanban[id]=sid; persist(); renderKanban();
+  toast(`✅ Movido para ${S.stages.find(s=>s.id===sid)?.label}`);
+}
+
+// ─── FUNNEL ───────────────────────────────────────────────────────────────────
+function calcFunnelData(){
+  const pts=filt(S.patients);
+  const now=new Date();
+  const comTel=pts.filter(p=>p.tel&&p.tel.trim()).length;
+  const rmkSentIds=new Set(Object.keys(S.rmkSent).filter(id=>S.rmkSent[id]));
+  const rmkSentCnt=rmkSentIds.size;
+  // Usa índice em S.stages para calcular progressão (independente de IDs hardcoded)
+  const stageIdx=id=>{ const i=S.stages.findIndex(s=>s.id===(S.kanban[id]||S.stages[0]?.id)); return i<0?0:i; };
+  const n=S.stages.length||6;
+  const avancaram=[...rmkSentIds].filter(id=>stageIdx(id)>=Math.max(1,Math.floor(n*0.33))).length;
+  const agendados=[...rmkSentIds].filter(id=>stageIdx(id)>=Math.max(2,Math.floor(n*0.5))).length;
+  const convertidos=[...rmkSentIds].filter(id=>stageIdx(id)>=Math.max(3,Math.floor(n*0.66))).length;
+  const urgente=pts.filter(p=>{ if(!p.last?.data) return false; const d=parseDate(p.last.data); if(!d) return false; return (now-d)/864e5>180; }).length;
+  const atencao=pts.filter(p=>{ if(!p.last?.data) return false; const d=parseDate(p.last.data); if(!d) return false; const days=(now-d)/864e5; return days>90&&days<=180; }).length;
+  const semTel=pts.filter(p=>!p.tel||!p.tel.trim()).length;
+  const pendente=comTel-rmkSentCnt;
+  const s2=S.stages[Math.max(1,Math.floor(n*0.33))]?.label||'Interessados';
+  const s3=S.stages[Math.max(2,Math.floor(n*0.5))]?.label||'Agendados';
+  const s4=S.stages[Math.max(3,Math.floor(n*0.66))]?.label||'Convertidos';
+  const fStages=[
+    {lbl:'BASE ALCANÇÁVEL',sub:'Pacientes com telefone',    val:comTel,     grad:['#7B3F1A','#5C2B0F']},
+    {lbl:'ENVIADO',        sub:'Remarketing WA disparado',  val:rmkSentCnt, grad:['#9B5228','#7A3A18']},
+    {lbl:s2.toUpperCase(),  sub:'Avançaram no pipeline',    val:avancaram,  grad:['#C9A84C','#A8883A']},
+    {lbl:s3.toUpperCase(),  sub:'Etapa intermediária+',     val:agendados,  grad:['#D4AF60','#B8943E']},
+    {lbl:s4.toUpperCase(),  sub:'Etapa final do pipeline',  val:convertidos,grad:['#1DB954','#158F3E']},
+  ];
+  return {comTel,rmkSentCnt,avancaram,agendados,convertidos,urgente,atencao,semTel,pendente,fStages,pts};
+}
+
+function buildFunnelShapes(fStages,comTel,rowH=78,rowGap=4){
+  const maxVal=fStages[0].val||1;
+  const widths=fStages.map(s=>s.val===0?3:Math.max(8,s.val/maxVal*100));
+  return fStages.map((s,i)=>{
+    const wTop=widths[i], wBot=i===fStages.length-1?3:widths[i+1];
+    const tl=(100-wTop)/2, tr=(100+wTop)/2, bl=(100-wBot)/2, br=(100+wBot)/2;
+    const prev=fStages[i-1];
+    const dropPct=prev&&prev.val>0?(s.val/prev.val*100):100;
+    const ofBase=comTel>0?(s.val/comTel*100):0;
+    const isLast=i===fStages.length-1;
+    return`<div style="display:flex;align-items:center;margin-bottom:${isLast?0:rowGap}px;height:${rowH}px">
+      <div style="flex:0 0 58%;height:100%;
+        clip-path:polygon(${tl.toFixed(2)}% 0%,${tr.toFixed(2)}% 0%,${br.toFixed(2)}% 100%,${bl.toFixed(2)}% 100%);
+        background:linear-gradient(160deg,${s.grad[0]} 0%,${s.grad[1]} 100%);
+        filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))"></div>
+      <div style="flex:1;display:flex;align-items:center;gap:10px;padding-left:14px">
+        <div style="width:8px;height:8px;border-radius:50%;background:${s.grad[0]};flex-shrink:0;box-shadow:0 0 0 3px ${s.grad[0]}33"></div>
+        <div>
+          <div style="font-size:10.5px;font-weight:800;color:var(--txt2);letter-spacing:1px">${s.lbl}</div>
+          <div style="font-size:22px;font-weight:900;color:${s.grad[0]};line-height:1.1">${s.val.toLocaleString('pt-BR')}</div>
+          <div style="font-size:10px;margin-top:1px">${i===0?`<span style="color:var(--txt3)">100% da base</span>`:dropPct<100?`<span style="color:#F87171">▼ ${(100-dropPct).toFixed(0)}% drop · ${ofBase.toFixed(1)}% da base</span>`:`<span style="color:#34D399">= sem perda</span>`}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderFunnel(){
+  const {comTel,rmkSentCnt,avancaram,agendados,convertidos,urgente,atencao,semTel,pendente,fStages,pts}=calcFunnelData();
+
+  const total=pts.length;
+
+  const all=filtAtend(S.patients);
+  const tbreak={};
+  all.forEach(a=>{
+    if(!a.tipo) return;
+    if(!tbreak[a.tipo]) tbreak[a.tipo]={t:0,c:0,x:0,f:0};
+    tbreak[a.tipo].t++;
+    const s=(a.status||'').toLowerCase();
+    if(s==='confirmado') tbreak[a.tipo].c++;
+    else if(s==='cancelou') tbreak[a.tipo].x++;
+    else if(s==='faltou') tbreak[a.tipo].f++;
+  });
+  const topT=Object.entries(tbreak).sort((a,b)=>b[1].t-a[1].t).slice(0,10);
+
+  const funnelHtml=buildFunnelShapes(fStages,comTel);
+
+  document.getElementById('view').innerHTML=`
+  <div style="display:grid;grid-template-columns:500px 1fr;gap:20px;align-items:start">
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card" style="border:1px solid rgba(201,168,76,.3)">
+        <div style="font-size:16px;font-weight:700;color:var(--gold);margin-bottom:4px">Funil de Remarketing</div>
+        <div style="font-size:11.5px;color:var(--txt3);margin-bottom:20px">Jornada dos pacientes da base até a conversão</div>
+        ${funnelHtml}
+        <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--bord);display:flex;gap:20px">
+          <div>
+            <div style="font-size:10.5px;color:var(--txt3)">Taxa de envio</div>
+            <div style="font-size:18px;font-weight:700;color:var(--gold)">${comTel>0?(rmkSentCnt/comTel*100).toFixed(1):0}%</div>
+          </div>
+          <div>
+            <div style="font-size:10.5px;color:var(--txt3)">Conversão (enviados → convertidos)</div>
+            <div style="font-size:18px;font-weight:700;color:#34D399">${rmkSentCnt>0?(convertidos/rmkSentCnt*100).toFixed(1):0}%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;color:var(--gold);margin-bottom:12px">Oportunidades na Base</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          ${[
+            {lbl:'Urgente',val:urgente,sub:'>180d sem retorno',bg:'rgba(239,68,68,.12)',tc:'#F87171'},
+            {lbl:'Atenção',val:atencao,sub:'90–180d · janela ideal',bg:'rgba(245,158,11,.12)',tc:'#FBBF24'},
+            {lbl:'Pendente',val:pendente,sub:'Com tel · aguardando envio',bg:'rgba(201,168,76,.1)',tc:'var(--gold)'},
+            {lbl:'Sem telefone',val:semTel,sub:'Fora do alcance WA',bg:'rgba(255,255,255,.04)',tc:'var(--txt3)'},
+          ].map(s=>`<div style="background:${s.bg};border-radius:10px;padding:12px">
+            <div style="font-size:21px;font-weight:800;color:${s.tc};line-height:1">${s.val.toLocaleString('pt-BR')}</div>
+            <div style="font-size:12px;font-weight:600;color:${s.tc};margin-top:3px">${s.lbl}</div>
+            <div style="font-size:10px;color:var(--txt3);margin-top:2px">${s.sub}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-size:16px;font-weight:700;color:var(--gold);margin-bottom:4px">Conversão por Procedimento</div>
+      <div style="font-size:11.5px;color:var(--txt3);margin-bottom:16px">Taxa de confirmação histórica por tipo de atendimento</div>
+      <div style="overflow-y:auto;max-height:620px;padding-right:4px">
+        ${topT.map(([tipo,d])=>{
+          const taxa=d.t>0?(d.c/d.t*100):0;
+          const cor=taxa>=70?'#34D399':taxa>=50?'#FBBF24':'#F87171';
+          return`<div style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;flex-wrap:wrap;gap:4px">
+              <span style="font-size:12.5px;color:var(--txt);font-weight:600;flex:1">${tipo}</span>
+              <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+                <span style="font-size:10.5px;color:var(--txt3)">${d.t} total</span>
+                <span style="font-size:10.5px;color:#34D399">✓${d.c}</span>
+                <span style="font-size:10.5px;color:#F87171">✗${d.x}</span>
+                <span style="font-size:11.5px;font-weight:700;color:${cor};background:${cor}22;padding:2px 8px;border-radius:5px">${taxa.toFixed(0)}%</span>
+              </div>
+            </div>
+            <div style="background:var(--surf3);height:8px;border-radius:4px;overflow:hidden">
+              <div style="background:${cor};height:8px;border-radius:4px;width:${taxa}%;transition:width 1s"></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+  </div>`;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+async function init(){
+  await loadPersist();
+  // Migrate old stage IDs to new ones
+  const migrate={'lead':'entrar','conf':'retornou','agend':'agend'};
+  Object.keys(S.kanban).forEach(id=>{
+    if(migrate[S.kanban[id]]) S.kanban[id]=migrate[S.kanban[id]];
+  });
+  if(S.patients.length) document.getElementById('pcnt').textContent=S.patients.length;
+  updateBdayCnt();
+  go('dashboard');
+}
+
+init();
+</script>
+</body>
+</html>
