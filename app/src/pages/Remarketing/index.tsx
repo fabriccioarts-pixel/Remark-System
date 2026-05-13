@@ -1,10 +1,21 @@
-import { useCRM, filt, patientRmkCat } from '../../store'
+import { useCRM, filt, patientRmkCat, dueFollowups } from '../../store'
 import { ICO, TMPLS, WA_SVG } from '../../lib/constants'
 import { waUrl, fmtDateTime, timeAgo, getInitials, daysSince, badgeClass } from '../../lib/utils'
 import { WaConfigModal } from './WaConfigModal'
 
+function fmtFollowDate(iso: string): string {
+  const today = new Date().toISOString().slice(0, 10)
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1)
+  const tmrStr = tomorrow.toISOString().slice(0, 10)
+  if (iso === today) return 'Hoje'
+  if (iso === tmrStr) return 'Amanhã'
+  const [y, m, d] = iso.split('-')
+  return `${d}/${m}/${y}`
+}
+
 export function Remarketing() {
-  const { patients, q, period, rmkFilter, rmkSent, kanban, waConfig, setRmkFilter, markSent, markAllSent, resetRmk, openModal } = useCRM()
+  const { patients, q, period, rmkFilter, rmkSent, kanban, waConfig, followups, setRmkFilter, markSent, clearFollowup, markAllSent, resetRmk, openModal } = useCRM()
+  const duePts = dueFollowups(patients, followups)
 
   const cats = Object.keys(TMPLS)
   let pts = filt(patients, q, period)
@@ -81,6 +92,41 @@ export function Remarketing() {
 
         {/* Main list */}
         <div style={{ flex: 1, minWidth: 0 }}>
+
+          {/* Follow-up queue */}
+          {duePts.length > 0 && (
+            <div style={{ background: 'rgba(239,68,68,.06)', border: '1px solid rgba(239,68,68,.2)', borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#F87171', letterSpacing: '.6px', marginBottom: 10 }}>🔔 FOLLOW-UPS PENDENTES — {duePts.length}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                {duePts.map(p => {
+                  const isOverdue = p.followup.date < new Date().toISOString().slice(0, 10)
+                  const wu = p.tel ? waUrl(p.tel, `Olá ${p.nome.split(' ')[0]}! `) : '#'
+                  return (
+                    <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surf)', border: '1px solid var(--bord2)', borderRadius: 8, padding: '9px 12px' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--txt)' }}>{p.nome}</div>
+                        <div style={{ fontSize: 11, color: isOverdue ? '#F87171' : '#FBBF24', fontWeight: 600 }}>
+                          {isOverdue ? '⚠️ Vencido · ' : '📅 '}{fmtFollowDate(p.followup.date)}
+                          {p.followup.note && <span style={{ color: 'var(--txt3)', fontWeight: 400 }}> · {p.followup.note}</span>}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                        {p.tel && (
+                          <a href={wu} target="natuclinic_wa" className="btn btn-wa" style={{ padding: '4px 9px', fontSize: 11 }}
+                            onClick={() => { markSent(p.id); clearFollowup(p.id) }}
+                            dangerouslySetInnerHTML={{ __html: WA_SVG + ' Enviar' }} />
+                        )}
+                        <button onClick={() => clearFollowup(p.id)}
+                          style={{ padding: '4px 9px', background: 'var(--surf2)', border: '1px solid var(--bord)', borderRadius: 6, cursor: 'pointer', color: 'var(--txt3)', fontSize: 11 }}>
+                          Fechar
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
             <div style={{ fontSize: 13, color: 'var(--txt2)' }}>{filtered.length} pacientes · {filtered.filter(p => !rmkSent[p.id]).length} pendentes</div>
             <button className="btn btn-s" style={{ padding: '6px 12px', fontSize: 12 }} onClick={markAllSent}>✅ Marcar todos enviados</button>

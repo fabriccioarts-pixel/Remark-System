@@ -1,7 +1,7 @@
 import { SB } from './supabase'
 import { buildPatients } from './csv'
 import { DEFAULT_STAGES } from './constants'
-import type { Stage, WaConfig, VoucherConfig, NoteEntry, VoucherEntry } from './types'
+import type { Stage, WaConfig, VoucherConfig, NoteEntry, VoucherEntry, FollowupEntry } from './types'
 
 export interface AppState {
   patients: ReturnType<typeof buildPatients>
@@ -10,6 +10,7 @@ export interface AppState {
   birthdates: Record<string, string>
   vouchers: Record<string, VoucherEntry>
   notes: Record<string, NoteEntry[]>
+  followups: Record<string, FollowupEntry>
   voucherConfig: VoucherConfig
   waConfig: WaConfig
   stages: Stage[]
@@ -37,6 +38,7 @@ export function persist(state: AppState): void {
   ls('nc_waconfig', JSON.stringify(state.waConfig))
   ls('nc_stages', JSON.stringify(state.stages))
   ls('nc_notes', JSON.stringify(state.notes))
+  ls('nc_followups', JSON.stringify(state.followups))
   ls('nc_updated', new Date().toISOString())
 
   if (sbSaveTimer) clearTimeout(sbSaveTimer)
@@ -59,6 +61,7 @@ async function sbSave(state: AppState): Promise<void> {
       vouchers: JSON.stringify(state.vouchers),
       voucher_config: JSON.stringify(vConf),
       patients_raw: rows,
+      followups: JSON.stringify(state.followups),
       updated_at: now,
     }
     const { error } = await SB.from('crm_state').upsert(payload, { onConflict: 'id' })
@@ -125,6 +128,9 @@ export async function loadPersist(): Promise<Partial<AppState>> {
 
     const nts = (sysData?.notes ?? getS('notes'))
     if (nts) result.notes = parse(nts as string, {})
+
+    const fu = getS('followups')
+    result.followups = fu ? parse(fu as string, {}) : {}
 
     const st = (sysData?.stages ?? getS('stages'))
     const stParsed = parse(st as string, [] as Stage[])

@@ -1,4 +1,4 @@
-import { useCRM, thisMonthBdays } from '../store'
+import { useCRM, thisMonthBdays, dueFollowups } from '../store'
 import type { PageId } from '../lib/types'
 
 const NAV_ITEMS: { id: PageId; label: string; icon: string }[] = [
@@ -13,8 +13,9 @@ const COMMERCIAL_ITEMS: { id: PageId; label: string; icon: string }[] = [
 ]
 
 export function Sidebar() {
-  const { page, setPage, patients, birthdates, importCSV } = useCRM()
+  const { page, setPage, patients, birthdates, followups, importCSV } = useCRM()
   const bdayCnt = thisMonthBdays(patients, birthdates).length
+  const followupCnt = dueFollowups(patients, followups).length
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -47,6 +48,9 @@ export function Sidebar() {
           {item.label}
           {item.id === 'bdays' && bdayCnt > 0 && (
             <span className="nav-badge">{bdayCnt}</span>
+          )}
+          {item.id === 'remarketing' && followupCnt > 0 && (
+            <span className="nav-badge" style={{ background: followupCnt > 0 ? '#F87171' : undefined, color: '#fff' }}>{followupCnt}</span>
           )}
         </div>
       ))}

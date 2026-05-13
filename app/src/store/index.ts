@@ -3,7 +3,7 @@ import { DEFAULT_STAGES } from '../lib/constants'
 import { persist as persistStorage, loadPersist } from '../lib/storage'
 import { buildPatients, parseCSV, mergeRows, rmkCat, readFileWithEncoding } from '../lib/csv'
 import { SB } from '../lib/supabase'
-import type { Patient, Stage, WaConfig, VoucherConfig, NoteEntry, VoucherEntry, PageId, Period } from '../lib/types'
+import type { Patient, Stage, WaConfig, VoucherConfig, NoteEntry, VoucherEntry, FollowupEntry, PageId, Period } from '../lib/types'
 import type { RawRow } from '../lib/csv'
 
 interface CRMStore {
@@ -14,6 +14,7 @@ interface CRMStore {
   birthdates: Record<string, string>
   vouchers: Record<string, VoucherEntry>
   notes: Record<string, NoteEntry[]>
+  followups: Record<string, FollowupEntry>
   voucherConfig: VoucherConfig
   waConfig: WaConfig
   stages: Stage[]
@@ -48,6 +49,8 @@ interface CRMStore {
   saveBday: (id: string, val: string) => void
   addNote: (patientId: string, text: string) => void
   deleteNote: (patientId: string, idx: number) => void
+  setFollowup: (patientId: string, date: string, note: string) => void
+  clearFollowup: (patientId: string) => void
   genVoucher: (patientId: string) => VoucherEntry
   markVoucherSent: (patientId: string) => void
   saveVoucherConfig: (cfg: VoucherConfig) => void
@@ -67,6 +70,7 @@ function getState(store: CRMStore) {
     birthdates: store.birthdates,
     vouchers: store.vouchers,
     notes: store.notes,
+    followups: store.followups,
     voucherConfig: store.voucherConfig,
     waConfig: store.waConfig,
     stages: store.stages,
@@ -82,6 +86,7 @@ export const useCRM = create<CRMStore>((set, get) => ({
   birthdates: {},
   vouchers: {},
   notes: {},
+  followups: {},
   voucherConfig: { discount: '10%' },
   waConfig: { token: '', phoneNumberId: '', templateName: 'hello_world', enabled: false },
   stages: JSON.parse(JSON.stringify(DEFAULT_STAGES)),
@@ -113,6 +118,7 @@ export const useCRM = create<CRMStore>((set, get) => ({
       birthdates: loaded.birthdates || {},
       vouchers: loaded.vouchers || {},
       notes: loaded.notes || {},
+      followups: loaded.followups || {},
       voucherConfig: loaded.voucherConfig || { discount: '10%' },
       waConfig: loaded.waConfig || { token: '', phoneNumberId: '', templateName: 'hello_world', enabled: false },
       stages: loaded.stages || JSON.parse(JSON.stringify(DEFAULT_STAGES)),
@@ -223,6 +229,19 @@ export const useCRM = create<CRMStore>((set, get) => ({
     notes[patientId] = (notes[patientId] || []).filter((_, i) => i !== idx)
     set({ notes })
     persistStorage({ ...getState(get()), notes })
+  },
+
+  setFollowup: (patientId, date, note) => {
+    const followups = { ...get().followups, [patientId]: { date, note } }
+    set({ followups })
+    persistStorage({ ...getState(get()), followups })
+  },
+
+  clearFollowup: (patientId) => {
+    const followups = { ...get().followups }
+    delete followups[patientId]
+    set({ followups })
+    persistStorage({ ...getState(get()), followups })
   },
 
   genVoucher: (patientId) => {
@@ -417,6 +436,16 @@ export function filtAtend(patients: Patient[], period: Period) {
 
 export function patientRmkCat(p: Patient): string {
   return rmkCat(p.last?.tipo || '', p.last?.status || '')
+}
+
+export function dueFollowups(patients: Patient[], followups: Record<string, FollowupEntry>): (Patient & { followup: FollowupEntry })[] {
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  tomorrow.setHours(23, 59, 59, 999)
+  return patients
+    .filter(p => followups[p.id] && new Date(followups[p.id].date + 'T23:59:59') <= tomorrow)
+    .map(p => ({ ...p, followup: followups[p.id] }))
+    .sort((a, b) => a.followup.date.localeCompare(b.followup.date))
 }
 
 export function thisMonthBdays(patients: Patient[], birthdates: Record<string, string>): Patient[] {

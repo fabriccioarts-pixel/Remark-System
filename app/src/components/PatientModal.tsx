@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useCRM } from '../store'
 import { ICO, TMPLS, WA_SVG } from '../lib/constants'
 import { waUrl, getInitials, badgeClass } from '../lib/utils'
@@ -10,9 +10,28 @@ function fmtMsg(t: string) {
   return t.replace(/\*(.*?)\*/g, '<strong>$1</strong>').replace(/_(.*?)_/g, '<em>$1</em>').replace(/\n/g, '<br>')
 }
 
+const QUICK_DAYS = [3, 7, 15, 30]
+
+function addDays(n: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() + n)
+  return d.toISOString().slice(0, 10)
+}
+
+function fmtFollowupDate(iso: string): string {
+  const [y, m, d] = iso.split('-')
+  return `${d}/${m}/${y}`
+}
+
 export function PatientModal({ patient: p }: { patient: Patient }) {
-  const { kanban, stages, birthdates, notes, saveBday, addNote, deleteNote, setKanban, showToast, openModal, closeModal } = useCRM()
+  const { kanban, stages, birthdates, notes, followups, saveBday, addNote, deleteNote, setKanban, setFollowup, clearFollowup, showToast, openModal, closeModal } = useCRM()
   const [noteText, setNoteText] = useState('')
+  const followupNoteRef = useRef<HTMLInputElement>(null)
+
+  const curFollowup = followups[p.id] || null
+  const today = new Date().toISOString().slice(0, 10)
+  const isOverdue = curFollowup && curFollowup.date < today
+  const isDueToday = curFollowup && curFollowup.date === today
 
   const cat = rmkCat(p.last?.tipo || '', p.last?.status || '')
   const tmpl = TMPLS[cat]
@@ -86,6 +105,38 @@ export function PatientModal({ patient: p }: { patient: Patient }) {
             )
           })}
         </div>
+      </div>
+
+      {/* Follow-up */}
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ fontSize: 10, color: 'var(--txt3)', fontWeight: 600, letterSpacing: '.6px', marginBottom: 8 }}>FOLLOW-UP</div>
+        {curFollowup ? (
+          <div style={{ background: isOverdue ? 'rgba(239,68,68,.08)' : isDueToday ? 'rgba(251,191,36,.08)' : 'var(--surf3)', border: `1px solid ${isOverdue ? 'rgba(239,68,68,.3)' : isDueToday ? 'rgba(251,191,36,.3)' : 'var(--bord2)'}`, borderRadius: 8, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: isOverdue ? '#F87171' : isDueToday ? '#FBBF24' : 'var(--txt)' }}>
+                {isOverdue ? '⚠️ Vencido · ' : isDueToday ? '🔔 Hoje · ' : '📅 '}{fmtFollowupDate(curFollowup.date)}
+              </div>
+              {curFollowup.note && <div style={{ fontSize: 11.5, color: 'var(--txt2)', marginTop: 3 }}>{curFollowup.note}</div>}
+            </div>
+            <button onClick={() => { clearFollowup(p.id); showToast('Follow-up removido') }}
+              style={{ background: 'none', border: 'none', color: 'var(--txt3)', cursor: 'pointer', fontSize: 13, padding: 4 }}>✕</button>
+          </div>
+        ) : (
+          <div>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+              {QUICK_DAYS.map(n => (
+                <button key={n} onClick={() => { setFollowup(p.id, addDays(n), followupNoteRef.current?.value || ''); showToast(`📅 Follow-up em ${n} dias`) }}
+                  style={{ padding: '5px 12px', background: 'var(--surf3)', border: '1px solid var(--bord2)', borderRadius: 20, cursor: 'pointer', color: 'var(--txt2)', fontSize: 12, fontWeight: 600, transition: 'all .15s' }}
+                  onMouseOver={e => { (e.target as HTMLElement).style.borderColor = 'var(--gold)'; (e.target as HTMLElement).style.color = 'var(--gold)' }}
+                  onMouseOut={e => { (e.target as HTMLElement).style.borderColor = 'var(--bord2)'; (e.target as HTMLElement).style.color = 'var(--txt2)' }}>
+                  +{n}d
+                </button>
+              ))}
+            </div>
+            <input ref={followupNoteRef} placeholder="Observação (opcional)..."
+              style={{ width: '100%', background: 'var(--surf3)', border: '1px solid var(--bord2)', borderRadius: 7, padding: '7px 11px', color: 'var(--txt)', fontSize: 12.5, outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+        )}
       </div>
 
       {/* Notes */}

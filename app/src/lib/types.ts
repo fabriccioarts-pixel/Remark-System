@@ -40,6 +40,11 @@ export interface NoteEntry {
   text: string
 }
 
+export interface FollowupEntry {
+  date: string  // YYYY-MM-DD
+  note: string
+}
+
 export interface WaConfig {
   token: string
   phoneNumberId: string
