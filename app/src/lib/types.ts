@@ -56,6 +56,6 @@ export interface VoucherConfig {
   discount: string
 }
 
-export type PageId = 'dashboard' | 'patients' | 'remarketing' | 'kanban' | 'funnel' | 'bdays'
+export type PageId = 'dashboard' | 'patients' | 'remarketing' | 'reativar' | 'kanban' | 'funnel' | 'bdays'
 
 export type Period = 'all' | '30' | '90' | '180' | 'year'

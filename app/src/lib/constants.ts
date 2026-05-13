@@ -97,6 +97,10 @@ export const TMPLS: Record<string, TmplDef> = {
     label: 'Injetáveis', icon: 'pill', cor: '#EDE9FE',
     msg: n => `Olá, ${fn(n)}.\n\nAqui é a equipe da *Natuclinic.*\n\nSua sessão de *Injetáveis* está no prazo de renovação.\n\nManter o protocolo em dia é o que garante os resultados que você já viu — e evita perder o que foi conquistado.\n\nVamos agendar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
   },
+  reativar: {
+    label: 'Reativação', icon: 'refresh', cor: 'rgba(139,92,246,.15)',
+    msg: n => `Olá, ${fn(n)}! 👋\n\nAqui é a equipe da *Natuclinic.*\n\nFaz um tempinho que não nos vemos, e ficamos com saudades!\n\nSabemos que a rotina é corrida, mas seu bem-estar merece atenção — e a gente está aqui para isso.\n\nQue tal retomarmos seu acompanhamento? Temos condições especiais para pacientes que estão voltando. 💛\n\nQuando você tiver disponibilidade, é só falar!\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+  },
   cancelou: {
     label: 'Cancelamento', icon: 'warn', cor: 'rgba(239,68,68,.15)',
     msg: n => `Olá, ${fn(n)}.\n\nAqui é a equipe da *Natuclinic.*\n\nVimos que você precisou cancelar seu agendamento — sem problemas, entendemos que imprevistos acontecem.\n\nMas não queremos que você perca a continuidade do seu cuidado.\n\nQual seria o melhor momento para remarcarmos?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
@@ -111,6 +115,7 @@ export const META: Record<string, { title: string; sub: string }> = {
   dashboard:   { title: 'Dashboard',        sub: 'Visão geral do CRM Natuclinic' },
   patients:    { title: 'Pacientes',         sub: 'Histórico e gestão de pacientes' },
   remarketing: { title: 'Remarketing',       sub: 'Mensagens personalizadas via WhatsApp' },
+  reativar:    { title: 'Reativar',          sub: 'Pacientes sem atendimento há 3–6 meses' },
   kanban:      { title: 'Kanban',            sub: 'Pipeline de atendimento – arraste os cards' },
   funnel:      { title: 'Funil de Vendas',   sub: 'Análise de conversão e distribuição' },
   bdays:       { title: 'Aniversariantes',   sub: 'Remarketing de aniversário com vouchers de desconto' },

@@ -10,6 +10,7 @@ import { Remarketing } from './pages/Remarketing'
 import { Kanban } from './pages/Kanban'
 import { Funnel } from './pages/Funnel'
 import { Birthdays } from './pages/Birthdays'
+import { Reativar } from './pages/Reativar'
 
 function EmptyState() {
   const { importCSV } = useCRM()
@@ -61,6 +62,7 @@ function PageContent() {
     case 'kanban':      return <Kanban />
     case 'funnel':      return <Funnel />
     case 'bdays':       return <Birthdays />
+    case 'reativar':    return <Reativar />
     default:            return <div className="content"><EmptyState /></div>
   }
 }
