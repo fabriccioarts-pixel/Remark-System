@@ -51,7 +51,7 @@ async function sbSave(state: AppState): Promise<void> {
     const rows = ls('nc_rows') || '[]'
     const vConf = {
       ...state.voucherConfig,
-      _sys: { notes: state.notes, stages: state.stages, waConfig: state.waConfig },
+      _sys: { notes: state.notes, stages: state.stages, waConfig: state.waConfig, followups: state.followups },
     }
     const payload = {
       id: 'natuclinic',
@@ -61,18 +61,14 @@ async function sbSave(state: AppState): Promise<void> {
       vouchers: JSON.stringify(state.vouchers),
       voucher_config: JSON.stringify(vConf),
       patients_raw: rows,
-      followups: JSON.stringify(state.followups),
       updated_at: now,
     }
     const { error } = await SB.from('crm_state').upsert(payload, { onConflict: 'id' })
     if (!error) { ls('nc_sb_ts', now); return }
 
     // fallback: try without updated_at (table may not have that column)
-    const { patients_raw: pr, updated_at: _ua, ...payloadNoTs } = payload
-    const { error: err2 } = await SB.from('crm_state').upsert(
-      { ...payloadNoTs, patients_raw: pr },
-      { onConflict: 'id' }
-    )
+    const { updated_at: _ua, ...payloadNoTs } = payload
+    const { error: err2 } = await SB.from('crm_state').upsert(payloadNoTs, { onConflict: 'id' })
     if (!err2) { ls('nc_sb_ts', now) }
     else console.warn('sbSave failed:', err2.message)
   } catch (e: unknown) {
@@ -129,7 +125,8 @@ export async function loadPersist(): Promise<Partial<AppState>> {
     const nts = (sysData?.notes ?? getS('notes'))
     if (nts) result.notes = parse(nts as string, {})
 
-    const fu = getS('followups')
+    // followups stored in _sys (no separate Supabase column needed)
+    const fu = sysData?.followups ?? getS('followups')
     result.followups = fu ? parse(fu as string, {}) : {}
 
     const st = (sysData?.stages ?? getS('stages'))
