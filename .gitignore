@@ -6,3 +6,9 @@ Iniciar CRM.bat
 
 # Node
 node_modules/
+app/node_modules/
+app/dist/
+
+# Env — Supabase credentials
+app/.env
+app/.env.local

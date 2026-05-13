@@ -278,6 +278,7 @@ const S = {
   rmkSent: {},        // patientId -> bool
   birthdates: {},     // patientId -> "DD/MM"
   vouchers: {},       // "id-year-month" -> {code, sent, sentAt, usedAt}
+  notes: {},          // patientId -> text
   voucherConfig: {discount:'10%'},
   waConfig: {token:'', phoneNumberId:'', templateName:'hello_world', enabled:false},
   stages: JSON.parse(JSON.stringify(DEFAULT_STAGES)),
@@ -379,12 +380,33 @@ function openModal(html){
 function closeModal(){ document.getElementById('modal-bg').style.display='none'; document.body.style.overflow=''; }
 
 function copyTxt(txt){
-  navigator.clipboard.writeText(txt).catch(()=>{
-    const ta=document.createElement('textarea');
-    ta.value=txt; document.body.appendChild(ta); ta.select();
-    document.execCommand('copy'); document.body.removeChild(ta);
-  });
-  toast('✅ Mensagem copiada!');
+  if(navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(txt).then(() => {
+      toast('✅ Mensagem copiada!');
+    }).catch(() => fallbackCopy(txt));
+  } else {
+    fallbackCopy(txt);
+  }
+}
+
+function fallbackCopy(txt) {
+  const ta = document.createElement('textarea');
+  ta.value = txt;
+  ta.style.position = 'fixed';
+  ta.style.top = '0';
+  ta.style.left = '0';
+  ta.style.opacity = '0';
+  ta.style.pointerEvents = 'none';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    toast('✅ Mensagem copiada!');
+  } catch(e) {
+    toast('⚠️ Erro ao copiar');
+  } finally {
+    document.body.removeChild(ta);
+  }
 }
 
 function persist(){
@@ -396,6 +418,7 @@ function persist(){
     localStorage.setItem('nc_vconfig',JSON.stringify(S.voucherConfig));
     localStorage.setItem('nc_waconfig',JSON.stringify(S.waConfig));
     localStorage.setItem('nc_stages',JSON.stringify(S.stages));
+    localStorage.setItem('nc_notes',JSON.stringify(S.notes));
     localStorage.setItem('nc_updated',new Date().toISOString());
   }catch(e){}
   clearTimeout(sbSaveTimer);
@@ -405,27 +428,40 @@ function persist(){
 async function sbSave(){
   const now=localStorage.getItem('nc_updated')||new Date().toISOString();
   try{
-    const rows=localStorage.getItem('nc_rows');
-    const core={id:'natuclinic',kanban:S.kanban,rmk_sent:S.rmkSent,birthdates:S.birthdates,vouchers:S.vouchers,voucher_config:S.voucherConfig,patients_raw:rows};
-    const stg=S.stages.length?S.stages:JSON.parse(JSON.stringify(DEFAULT_STAGES));
-    // Tenta do mais completo ao mínimo — cada nível remove uma coluna opcional
-    // para contornar colunas que ainda não existem no Supabase
-    const attempts=[
-      {...core,kanban:S.kanban,wa_config:S.waConfig,stages:stg,updated_at:now},
-      {...core,stages:stg,updated_at:now},
-      {...core,updated_at:now},
-      core,   // mínimo garantido: só colunas originais da tabela
-    ];
-    for(const payload of attempts){
-      const {error}=await SB.from('crm_state').upsert(payload,{onConflict:'id'});
-      if(!error){
-        // Marca timestamp do save bem-sucedido para comparação no load
-        localStorage.setItem('nc_sb_ts',now);
-        toast('☁️ Salvo');
-        return;
-      }
-      console.warn('sbSave attempt failed:',error.message);
+    const rows=localStorage.getItem('nc_rows')||'[]';
+    
+    const vConf = { ...S.voucherConfig, _sys: {
+      notes: S.notes,
+      stages: S.stages,
+      waConfig: S.waConfig,
+      rows: rows
+    }};
+
+    const payload={
+      id:'natuclinic',
+      kanban: JSON.stringify(S.kanban),
+      rmk_sent: JSON.stringify(S.rmkSent),
+      birthdates: JSON.stringify(S.birthdates),
+      vouchers: JSON.stringify(S.vouchers),
+      voucher_config: JSON.stringify(vConf),
+      updated_at: now
+    };
+    
+    const {error}=await SB.from('crm_state').upsert(payload,{onConflict:'id'});
+    if(!error){
+      localStorage.setItem('nc_sb_ts',now);
+      toast('☁️ Salvo');
+      return;
     }
+    
+    // Tenta sem updated_at caso a tabela original não tenha
+    const {error:err2}=await SB.from('crm_state').upsert({...payload, updated_at:undefined},{onConflict:'id'});
+    if(!err2){
+      localStorage.setItem('nc_sb_ts',now);
+      toast('☁️ Salvo');
+      return;
+    }
+    console.warn('sbSave failed:', err2.message);
     toast('⚠️ Falha ao salvar na nuvem');
   }catch(e){
     toast('⚠️ Supabase offline');
@@ -441,11 +477,18 @@ async function loadPersist(){
     else if(error) console.warn('Supabase load error:',error.message);
   }catch(e){ console.warn('Supabase offline:',e.message); }
 
-  // preferLocal = true quando há mudanças locais mais recentes que o último save confirmado
-  // (F5 rápido antes do debounce de 1.5s, ou sbSave falhou)
   const localTs=localStorage.getItem('nc_updated');
-  const sbTs=localStorage.getItem('nc_sb_ts');   // timestamp do último sbSave bem-sucedido
-  const preferLocal=localTs&&(!sbTs||new Date(localTs)>new Date(sbTs));
+  const sbTs=localStorage.getItem('nc_sb_ts');
+  const sbUpdated=sbData?.updated_at;
+
+  let preferLocal=false;
+  if(localTs && (!sbTs || new Date(localTs) > new Date(sbTs))){
+    preferLocal=true; // Local has unsaved changes
+  }
+  if(sbUpdated && localTs && new Date(sbUpdated) > new Date(localTs)){
+    preferLocal=false; // Supabase has newer changes than local
+  }
+
   const getS=(key,sbKey)=>preferLocal
     ?(localStorage.getItem('nc_'+key)??sbData?.[sbKey||key])
     :(sbData?.[sbKey||key]??localStorage.getItem('nc_'+key));
@@ -455,16 +498,36 @@ async function loadPersist(){
     const r=getS('rmk','rmk_sent'); if(r) S.rmkSent=typeof r==='string'?JSON.parse(r):r;
     const b=getS('bday','birthdates'); if(b) S.birthdates=typeof b==='string'?JSON.parse(b):b;
     const v=getS('vouchers'); if(v) S.vouchers=typeof v==='string'?JSON.parse(v):v;
-    const vc=getS('vconfig','voucher_config'); if(vc) S.voucherConfig=typeof vc==='string'?JSON.parse(vc):vc;
-    const wc=getS('waconfig','wa_config'); if(wc) S.waConfig=typeof wc==='string'?JSON.parse(wc):wc;
-    const st=getS('stages'); if(st) S.stages=typeof st==='string'?JSON.parse(st):st;
+    
+    const vc=getS('vconfig','voucher_config'); 
+    let sysData = null;
+    if(vc) {
+      let parsed = typeof vc==='string'?JSON.parse(vc):vc;
+      if(parsed && parsed._sys) {
+        sysData = parsed._sys;
+        delete parsed._sys; // clean it from app state
+      }
+      S.voucherConfig = parsed;
+    }
+
+    const wc = sysData?.waConfig ?? getS('waconfig','wa_config'); if(wc) S.waConfig=typeof wc==='string'?JSON.parse(wc):wc;
+    const nts = sysData?.notes ?? getS('notes'); if(nts) S.notes=typeof nts==='string'?JSON.parse(nts):nts;
+    const st = sysData?.stages ?? getS('stages'); if(st) S.stages=typeof st==='string'?JSON.parse(st):st;
     if(!Array.isArray(S.stages)||!S.stages.length) S.stages=JSON.parse(JSON.stringify(DEFAULT_STAGES));
     
-    // Especial para pacientes
-    const p=sbData?.patients_raw || localStorage.getItem('nc_rows');
+    // Especial para pacientes:
+    let p = null;
+    if(!preferLocal && sysData?.rows) {
+      p = sysData.rows; // Cloud is newer and has packed rows
+    } else {
+      p = preferLocal 
+        ? (localStorage.getItem('nc_rows') ?? sbData?.patients_raw ?? sysData?.rows) 
+        : (sbData?.patients_raw ?? sysData?.rows ?? localStorage.getItem('nc_rows'));
+    }
+      
     if(p){
-      if(sbData?.patients_raw) localStorage.setItem('nc_rows',p);
-      S.patients=buildPatients(JSON.parse(p));
+      if(p !== localStorage.getItem('nc_rows')) localStorage.setItem('nc_rows',p);
+      S.patients=buildPatients(typeof p==='string'?JSON.parse(p):p);
     }
   }catch(e){ console.error('Load error:',e); }
 }
@@ -472,6 +535,49 @@ async function loadPersist(){
 function saveBday(id,val){
   if(val) S.birthdates[id]=val; else delete S.birthdates[id];
   persist();
+}
+
+function renderNotesList(id){
+  let nts = S.notes[id] || [];
+  if(typeof nts === 'string') { nts = [{ date: new Date().toISOString(), text: nts }]; S.notes[id] = nts; persist(); }
+  if(!Array.isArray(nts)) nts=[];
+  if(nts.length===0) return '<div style="font-size:11.5px;color:var(--txt3);text-align:center;padding:10px 0">Nenhuma anotação registrada.</div>';
+  return [...nts].reverse().map((n, i) => {
+    const d = new Date(n.date);
+    const dtStr = d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}) + ' às ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const realIdx = nts.length - 1 - i;
+    return `
+      <div style="background:var(--surf3);border:1px solid var(--bord);border-radius:6px;padding:10px 12px;position:relative">
+        <div style="font-size:10px;color:var(--txt3);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:600">${dtStr}</span>
+          <button onclick="deleteNote('${id}',${realIdx})" style="background:none;border:none;color:#F87171;cursor:pointer;padding:2px;font-size:12px;opacity:.7" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.7">${ICO.x}</button>
+        </div>
+        <div style="font-size:12.5px;color:var(--txt2);line-height:1.5;white-space:pre-wrap;word-break:break-word">${n.text}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function addNote(id){
+  const el = document.getElementById(`pat-notes-new-${id}`);
+  const val = el.value.trim();
+  if(!val) return;
+  let nts = S.notes[id] || [];
+  if(typeof nts === 'string') nts = [{ date: new Date().toISOString(), text: nts }];
+  nts.push({ date: new Date().toISOString(), text: val });
+  S.notes[id] = nts;
+  persist();
+  el.value = '';
+  document.getElementById(`pat-notes-list-${id}`).innerHTML = renderNotesList(id);
+  toast('📝 Anotação adicionada!');
+}
+
+function deleteNote(id, idx){
+  if(confirm('Apagar essa anotação?')){
+    S.notes[id].splice(idx, 1);
+    persist();
+    document.getElementById(`pat-notes-list-${id}`).innerHTML = renderNotesList(id);
+  }
 }
 
 function genVoucher(id){
@@ -612,21 +718,24 @@ function autoStage(p){
 }
 
 function rmkCat(tipo,status){
-  const t=(tipo||'').toLowerCase(), s=(status||'').toLowerCase();
-  if(s==='cancelou') return 'cancelou';
+  // Normaliza para ASCII para não depender de encoding correto do CSV
+  const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 -]/g,'');
+  const t=norm(tipo), s=norm(status);
+  if(s==='cancelou'||s==='cancelado') return 'cancelou';
   if(s==='faltou') return 'faltou';
+  if(s==='nao confirmado'||s==='nao-confirmado') return 'ortomol'; // trata como procedimento
   if(t.includes('botox')) return 'botox';
   if(t.includes('harmoniz')) return 'harmoniz';
   if(t.includes('intra-articular')||t.includes('intraarticular')) return 'intrart';
-  if(t.includes('ortomolecular')) return 'ortomol';
+  if(t.includes('ortomolecular')||t.includes('consulta')) return 'ortomol';
   if(t.includes('retorno')) return 'retorno';
-  if(t.includes('ozônio')||t.includes('ozonio')||t.includes('ozonioterapia')) return 'ozonio';
-  if(t.includes('reabilitação')||t.includes('reabilitacao')) return 'reab';
-  if(t.includes('injetável')||t.includes('injetavel')||t.includes('vitamina')||
-     t.includes('adek')||t.includes('trio')||t.includes('pool')||
-     t.includes('chronic')||t.includes('pisk')||t.includes('beg')||t.includes('enzima')) return 'injet';
-  if(t.includes('estética')||t.includes('estetica')||t.includes('limpeza')||
-     t.includes('avaliação')||t.includes('avaliacao')||t.includes('spa')||t.includes('lipocrio')) return 'estetica';
+  if(t.includes('ozonio')||t.includes('ozonioterapia')) return 'ozonio';
+  if(t.includes('reabilit')) return 'reab';
+  if(t.includes('injetavel')||t.includes('vitamina')||t.includes('adek')||
+     t.includes('trio')||t.includes('pool')||t.includes('chronic')||
+     t.includes('pisk')||t.includes('beg')||t.includes('enzima')) return 'injet';
+  if(t.includes('estetica')||t.includes('limpeza')||t.includes('avalia')||
+     t.includes('spa')||t.includes('lipocrio')||t.includes('protocolo')) return 'estetica';
   return 'ortomol';
 }
 
@@ -715,10 +824,14 @@ function importCSV(e){
   };
   const r1=new FileReader();
   r1.onload=ev=>{
-    if(!tryParse(ev.target.result)){
+    const txt=ev.target.result;
+    // Se UTF-8 gerou caracteres substitutos (arquivo é Windows-1252), usa encoding correto
+    if(txt.includes('�')){
       const r2=new FileReader();
       r2.onload=ev2=>tryParse(ev2.target.result);
       r2.readAsText(f,'windows-1252');
+    } else {
+      tryParse(txt);
     }
   };
   r1.readAsText(f,'utf-8');
@@ -1237,10 +1350,17 @@ function showCtxMenu(e, id){
 
   const menu=document.getElementById('ctx-menu');
   menu.style.display='block';
-  const x=Math.min(e.clientX, window.innerWidth-220);
-  const y=Math.min(e.clientY, window.innerHeight-menu.offsetHeight-10);
-  menu.style.left=x+'px';
-  menu.style.top=y+'px';
+  
+  let cx = e.clientX;
+  let cy = e.clientY;
+  if(typeof cx !== 'number') cx = e.touches?.[0]?.clientX || (window.innerWidth / 2);
+  if(typeof cy !== 'number') cy = e.touches?.[0]?.clientY || (window.innerHeight / 2);
+
+  const x = Math.max(10, Math.min(cx, window.innerWidth - (menu.offsetWidth || 220) - 10));
+  const y = Math.max(10, Math.min(cy, window.innerHeight - (menu.offsetHeight || 300) - 10));
+  
+  menu.style.left = x + 'px';
+  menu.style.top = y + 'px';
 }
 
 function ctxMoveStage(id, stageId){
@@ -1317,6 +1437,19 @@ function showPat(id){
             data-active="${active}"
             style="padding:5px 11px;border-radius:20px;border:1px solid ${active?'var(--gold)':'var(--bord)'};background:${active?'var(--gold3)':'var(--surf3)'};color:${active?'var(--gold)':'var(--txt2)'};font-size:11.5px;cursor:pointer;transition:all .15s">${s.label}</button>`;
         }).join('')}
+      </div>
+    </div>
+
+    <div style="margin-bottom:18px">
+      <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.6px;margin-bottom:8px">ANOTAÇÕES DO PACIENTE</div>
+      <div style="background:var(--surf2);border:1px solid var(--bord2);border-radius:8px;overflow:hidden">
+        <textarea id="pat-notes-new-${p.id}" style="width:100%;min-height:54px;background:transparent;border:none;padding:10px 12px;font-size:12.5px;color:var(--txt);font-family:inherit;resize:vertical;outline:none" placeholder="Escreva uma nova anotação sobre ${p.nome}..."></textarea>
+        <div style="display:flex;justify-content:flex-end;padding:6px 10px;border-top:1px solid var(--bord2)">
+          <button class="btn btn-p" style="padding:6px 14px;font-size:11.5px" onclick="addNote('${p.id}')">➕ Salvar Anotação</button>
+        </div>
+      </div>
+      <div id="pat-notes-list-${p.id}" style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+        ${renderNotesList(p.id)}
       </div>
     </div>
 
@@ -1792,7 +1925,7 @@ function renderKanban(){
           <span style="display:flex;align-items:center;gap:5px;color:${st.dot}">${ICO[st.ico]||''}<span style="color:var(--txt2)">${st.label}</span></span>
           <div style="display:flex;align-items:center;gap:5px">
             <span class="kb-cnt">${(grp[st.id]||[]).length}</span>
-            ${(st.id==='entrar'||st.id==='contato')?`<button onclick="go('remarketing')" title="Abrir Remarketing" style="background:#DBEAFE;border:none;border-radius:4px;padding:2px 6px;font-size:10px;color:#1E40AF;cursor:pointer;font-weight:600">📢 WA</button>`:''}
+
           </div>
         </div>
         ${(grp[st.id]||[]).slice(0,25).map(p=>kbCard(p)).join('')}
@@ -1826,10 +1959,7 @@ function kbCard(p){
       ${bday?`<span title="Aniversário HOJE!" style="font-size:14px;margin-top:-2px">🎂</span>`:bmonth?`<span title="Aniversariante do Mês" style="font-size:11px;opacity:.6;margin-top:1px">🎂</span>`:''}
     </div>
     <div style="font-size:11px;color:var(--txt2);margin-bottom:6px">${(p.last?.tipo||'–').substring(0,40)}</div>
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <div style="font-size:10.5px;color:var(--txt3)">${fmtDate(p.last?.data)}</div>
-      ${badge(p.last?.status)}
-    </div>
+    <div style="font-size:10.5px;color:var(--txt3)">${fmtDate(p.last?.data)}</div>
     ${p.tel?`<div style="margin-top:7px;padding-top:7px;border-top:1px solid var(--bord);display:flex;gap:5px">
       <a href="${wu}" target="natuclinic_wa" class="btn btn-wa" style="flex:1;justify-content:center;padding:4px;font-size:10.5px" onclick="markSent('${p.id}')">${WA_SVG} WA</a>
       <button onclick="showPat('${p.id}')" style="flex:1;font-size:10.5px;padding:4px;background:var(--surf2);border:1px solid var(--bord);border-radius:5px;cursor:pointer;color:var(--txt2)">Ver</button>
@@ -1841,10 +1971,28 @@ function kbStart(e,id){ dragId=id; setTimeout(()=>document.getElementById(`kk-${
 function kbEnd(e){ if(dragId) document.getElementById(`kk-${dragId}`)?.classList.remove('drag'); document.querySelectorAll('.kb-col').forEach(c=>c.classList.remove('dov')); dragId=null; }
 function kbOver(e,sid){ e.preventDefault(); document.querySelectorAll('.kb-col').forEach(c=>c.classList.remove('dov')); document.getElementById(`kc-${sid}`)?.classList.add('dov'); }
 function kbLeave(e){ if(!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.classList.remove('dov'); }
+function playPop(){
+  try{
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const t=ctx.currentTime;
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.type='sine';
+    osc.frequency.setValueAtTime(600,t);
+    osc.frequency.exponentialRampToValueAtTime(300,t+0.1);
+    gain.gain.setValueAtTime(0.2,t);
+    gain.gain.exponentialRampToValueAtTime(0.01,t+0.1);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t+0.1);
+  }catch(e){}
+}
 function kbDrop(e,sid){
   e.preventDefault();
   const id=e.dataTransfer.getData('text/plain')||dragId;
   if(!id) return;
+  if(S.kanban[id]!==sid) playPop();
   S.kanban[id]=sid; persist(); renderKanban();
   toast(`✅ Movido para ${S.stages.find(s=>s.id===sid)?.label}`);
 }
@@ -1856,26 +2004,48 @@ function calcFunnelData(){
   const comTel=pts.filter(p=>p.tel&&p.tel.trim()).length;
   const rmkSentIds=new Set(Object.keys(S.rmkSent).filter(id=>S.rmkSent[id]));
   const rmkSentCnt=rmkSentIds.size;
-  // Usa índice em S.stages para calcular progressão (independente de IDs hardcoded)
+  // Usa índice em S.stages para calcular progressão
   const stageIdx=id=>{ const i=S.stages.findIndex(s=>s.id===(S.kanban[id]||S.stages[0]?.id)); return i<0?0:i; };
   const n=S.stages.length||6;
-  const avancaram=[...rmkSentIds].filter(id=>stageIdx(id)>=Math.max(1,Math.floor(n*0.33))).length;
-  const agendados=[...rmkSentIds].filter(id=>stageIdx(id)>=Math.max(2,Math.floor(n*0.5))).length;
-  const convertidos=[...rmkSentIds].filter(id=>stageIdx(id)>=Math.max(3,Math.floor(n*0.66))).length;
+  
   const urgente=pts.filter(p=>{ if(!p.last?.data) return false; const d=parseDate(p.last.data); if(!d) return false; return (now-d)/864e5>180; }).length;
   const atencao=pts.filter(p=>{ if(!p.last?.data) return false; const d=parseDate(p.last.data); if(!d) return false; const days=(now-d)/864e5; return days>90&&days<=180; }).length;
   const semTel=pts.filter(p=>!p.tel||!p.tel.trim()).length;
   const pendente=comTel-rmkSentCnt;
-  const s2=S.stages[Math.max(1,Math.floor(n*0.33))]?.label||'Interessados';
-  const s3=S.stages[Math.max(2,Math.floor(n*0.5))]?.label||'Agendados';
-  const s4=S.stages[Math.max(3,Math.floor(n*0.66))]?.label||'Convertidos';
-  const fStages=[
-    {lbl:'BASE ALCANÇÁVEL',sub:'Pacientes com telefone',    val:comTel,     grad:['#7B3F1A','#5C2B0F']},
-    {lbl:'ENVIADO',        sub:'Remarketing WA disparado',  val:rmkSentCnt, grad:['#9B5228','#7A3A18']},
-    {lbl:s2.toUpperCase(),  sub:'Avançaram no pipeline',    val:avancaram,  grad:['#C9A84C','#A8883A']},
-    {lbl:s3.toUpperCase(),  sub:'Etapa intermediária+',     val:agendados,  grad:['#D4AF60','#B8943E']},
-    {lbl:s4.toUpperCase(),  sub:'Etapa final do pipeline',  val:convertidos,grad:['#1DB954','#158F3E']},
+
+  const fStages = [{
+    lbl:'TOTAL DE LEADS',
+    sub:'Base total de pacientes',
+    val:pts.length,
+    grad:['#334155','#0F172A'] // Slate/Midnight
+  }];
+
+  const activeStages = S.stages.filter(s => s.id !== 'nao');
+  const grads = [
+      ['#4F46E5','#231C77'], // Indigo
+      ['#8B5CF6','#411A8B'], // Purple
+      ['#EC4899','#88114A'], // Pink
+      ['#F43F5E','#8B0A29'], // Rose
+      ['#F59E0B','#854106'], // Amber/Gold
+      ['#10B981','#075E43'], // Emerald
+      ['#14B8A6','#0C5752']  // Teal
   ];
+
+  activeStages.forEach((st, i) => {
+    const count = pts.filter(p => stageIdx(p.id) >= i && S.kanban[p.id] !== 'nao').length;
+    fStages.push({
+      lbl: st.label.toUpperCase(),
+      sub: i===0 ? 'Iniciaram no pipeline' : i===activeStages.length-1 ? 'Etapa final de conversão' : 'Avançaram no pipeline',
+      val: count,
+      grad: grads[i] || grads[grads.length-1]
+    });
+  });
+
+  // Backward compatibility variables for bottom stats (using last stage as converted)
+  const avancaram = pts.filter(p=>stageIdx(p.id)>=1 && S.kanban[p.id]!=='nao').length;
+  const convertidos = pts.filter(p=>stageIdx(p.id)>=activeStages.length-1 && S.kanban[p.id]!=='nao').length;
+  const agendados = pts.filter(p=>stageIdx(p.id)>=Math.max(1, activeStages.length-2) && S.kanban[p.id]!=='nao').length;
+
   return {comTel,rmkSentCnt,avancaram,agendados,convertidos,urgente,atencao,semTel,pendente,fStages,pts};
 }
 
@@ -1924,24 +2094,24 @@ function renderFunnel(){
   });
   const topT=Object.entries(tbreak).sort((a,b)=>b[1].t-a[1].t).slice(0,10);
 
-  const funnelHtml=buildFunnelShapes(fStages,comTel);
+  const funnelHtml=buildFunnelShapes(fStages,total);
 
   document.getElementById('view').innerHTML=`
   <div style="display:grid;grid-template-columns:500px 1fr;gap:20px;align-items:start">
 
     <div style="display:flex;flex-direction:column;gap:16px">
       <div class="card" style="border:1px solid rgba(201,168,76,.3)">
-        <div style="font-size:16px;font-weight:700;color:var(--gold);margin-bottom:4px">Funil de Remarketing</div>
-        <div style="font-size:11.5px;color:var(--txt3);margin-bottom:20px">Jornada dos pacientes da base até a conversão</div>
+        <div style="font-size:16px;font-weight:700;color:var(--gold);margin-bottom:4px">Funil de Vendas</div>
+        <div style="font-size:11.5px;color:var(--txt3);margin-bottom:20px">Jornada de todos os pacientes no Kanban</div>
         ${funnelHtml}
         <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--bord);display:flex;gap:20px">
           <div>
-            <div style="font-size:10.5px;color:var(--txt3)">Taxa de envio</div>
-            <div style="font-size:18px;font-weight:700;color:var(--gold)">${comTel>0?(rmkSentCnt/comTel*100).toFixed(1):0}%</div>
+            <div style="font-size:10.5px;color:var(--txt3)">Conversão Total da Base</div>
+            <div style="font-size:18px;font-weight:700;color:var(--gold)">${total>0?(convertidos/total*100).toFixed(1):0}%</div>
           </div>
           <div>
-            <div style="font-size:10.5px;color:var(--txt3)">Conversão (enviados → convertidos)</div>
-            <div style="font-size:18px;font-weight:700;color:#34D399">${rmkSentCnt>0?(convertidos/rmkSentCnt*100).toFixed(1):0}%</div>
+            <div style="font-size:10.5px;color:var(--txt3)">Taxa de Avanço (Pipeline Ativo)</div>
+            <div style="font-size:18px;font-weight:700;color:#34D399">${total>0?(avancaram/total*100).toFixed(1):0}%</div>
           </div>
         </div>
       </div>
