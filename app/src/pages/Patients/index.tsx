@@ -48,7 +48,7 @@ export function Patients() {
           <button className="btn btn-p" style={{ padding: '7px 14px', fontSize: 12 }} onClick={exportPats}>⬇ Exportar</button>
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
+        <div className="table-wrap" style={{ overflowX: 'auto' }}>
           <table>
             <thead>
               <tr><th>Paciente</th><th>Telefone</th><th>Último Atend.</th><th>Tipo</th><th>Médico</th><th>Status</th><th>#</th><th>Ações</th></tr>

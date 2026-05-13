@@ -11,7 +11,7 @@ const PERIODS: { val: Period; lbl: string }[] = [
   { val: 'year', lbl: 'Este ano' },
 ]
 
-export function Topbar() {
+export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
   const { page, q, period, setQ, setPeriod } = useCRM()
   const [open, setOpen] = useState(false)
   const meta = META[page] || {}
@@ -19,9 +19,16 @@ export function Topbar() {
 
   return (
     <div className="topbar">
-      <div>
-        <div className="pg-title">{meta.title || page}</div>
-        <div className="pg-sub">{meta.sub || ''}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button className="menu-btn" onClick={onMenuClick} aria-label="Menu">
+          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <div>
+          <div className="pg-title">{meta.title || page}</div>
+          <div className="pg-sub">{meta.sub || ''}</div>
+        </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div className="c-sel" style={{ position: 'relative', userSelect: 'none', fontSize: 13.2, width: 155 }}>

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useCRM } from './store'
 import { Sidebar } from './components/Sidebar'
 import { Topbar } from './components/Topbar'
@@ -68,22 +68,21 @@ function PageContent() {
 export default function App() {
   const init = useCRM(s => s.init)
   const modalContent = useCRM(s => s.modalContent)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  useEffect(() => { init() }, [init])
 
   useEffect(() => {
-    init()
-  }, [init])
-
-  // lock body scroll when modal is open
-  useEffect(() => {
-    document.body.style.overflow = modalContent ? 'hidden' : ''
+    document.body.style.overflow = (modalContent || sidebarOpen) ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
-  }, [modalContent])
+  }, [modalContent, sidebarOpen])
 
   return (
     <>
-      <Sidebar />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
       <div className="main">
-        <Topbar />
+        <Topbar onMenuClick={() => setSidebarOpen(o => !o)} />
         <PageContent />
       </div>
       <Modal />

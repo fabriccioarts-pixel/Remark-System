@@ -12,7 +12,7 @@ const COMMERCIAL_ITEMS: { id: PageId; label: string; icon: string }[] = [
   { id: 'bdays', label: 'Aniversários', icon: '<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6v2H6a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-8a3 3 0 0 0-3-3h-2V6a4 4 0 0 0-8 0zm6 0v2h-4V6a2 2 0 0 1 4 0zM5 11h14v8H5v-8z"/><circle cx="8" cy="3" r="1.2"/><circle cx="12" cy="2" r="1.2"/><circle cx="16" cy="3" r="1.2"/></svg>' },
 ]
 
-export function Sidebar() {
+export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { page, setPage, patients, birthdates, followups, importCSV } = useCRM()
   const bdayCnt = thisMonthBdays(patients, birthdates).length
   const followupCnt = dueFollowups(patients, followups).length
@@ -23,8 +23,10 @@ export function Sidebar() {
     e.target.value = ''
   }
 
+  const nav = (id: Parameters<typeof setPage>[0]) => { setPage(id); onClose() }
+
   return (
-    <nav className="sidebar">
+    <nav className={`sidebar${isOpen ? ' open' : ''}`}>
       <div className="logo">
         Re<span>mark</span><sup>®</sup>
         <small>CRM · Gestão de Pacientes</small>
@@ -32,7 +34,7 @@ export function Sidebar() {
 
       <div className="nav-sec">Principal</div>
       {NAV_ITEMS.map(item => (
-        <div key={item.id} className={`nav-item ${page === item.id ? 'active' : ''}`} onClick={() => setPage(item.id)}>
+        <div key={item.id} className={`nav-item ${page === item.id ? 'active' : ''}`} onClick={() => nav(item.id)}>
           <span dangerouslySetInnerHTML={{ __html: item.icon }} />
           {item.label}
           {item.id === 'patients' && patients.length > 0 && (
@@ -43,7 +45,7 @@ export function Sidebar() {
 
       <div className="nav-sec">Comercial</div>
       {COMMERCIAL_ITEMS.map(item => (
-        <div key={item.id} className={`nav-item ${page === item.id ? 'active' : ''}`} onClick={() => setPage(item.id)}>
+        <div key={item.id} className={`nav-item ${page === item.id ? 'active' : ''}`} onClick={() => nav(item.id)}>
           <span dangerouslySetInnerHTML={{ __html: item.icon }} />
           {item.label}
           {item.id === 'bdays' && bdayCnt > 0 && (

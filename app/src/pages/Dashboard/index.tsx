@@ -100,7 +100,7 @@ export function Dashboard() {
 
   return (
     <div className="content">
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(190px,1fr))', gap: 14, marginBottom: 22 }}>
+      <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(190px,1fr))', gap: 14, marginBottom: 22 }}>
         <Kpi ico="users" lbl="Total Pacientes" val={pts.length.toLocaleString('pt-BR')} sub="Base de pacientes" />
         <Kpi ico="check" lbl="Confirmados" val={conf.toLocaleString('pt-BR')} sub={`Taxa ${taxa}%`} />
         <Kpi ico="x" lbl="Cancelamentos" val={canc.toLocaleString('pt-BR')} sub={`${((canc / (all.length || 1)) * 100).toFixed(1)}% do total`} />

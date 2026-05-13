@@ -38,7 +38,7 @@ export function Remarketing() {
 
   return (
     <div className="content">
-      <div style={{ display: 'flex', gap: 18 }}>
+      <div className="rmk-layout" style={{ display: 'flex', gap: 18 }}>
         {/* Sidebar */}
         <div style={{ width: 210, flexShrink: 0 }}>
           <div className="card" style={{ padding: 14, marginBottom: 12 }}>
