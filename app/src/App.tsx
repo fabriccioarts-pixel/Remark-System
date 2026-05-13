@@ -36,8 +36,23 @@ function EmptyState() {
   )
 }
 
+function LoadingState() {
+  return (
+    <div className="empty">
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="1.5" style={{ animation: 'spin 1s linear infinite' }}>
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+        </svg>
+        <div style={{ fontSize: 14, color: 'var(--txt2)' }}>Carregando dados...</div>
+      </div>
+      <style>{`@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
+    </div>
+  )
+}
+
 function PageContent() {
-  const { page, patients } = useCRM()
+  const { page, patients, loaded } = useCRM()
+  if (!loaded) return <div className="content"><LoadingState /></div>
   if (!patients.length) return <div className="content"><EmptyState /></div>
   switch (page) {
     case 'dashboard':   return <Dashboard />
