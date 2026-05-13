@@ -49,7 +49,7 @@ async function sbSave(state: AppState): Promise<void> {
     const rows = ls('nc_rows') || '[]'
     const vConf = {
       ...state.voucherConfig,
-      _sys: { notes: state.notes, stages: state.stages, waConfig: state.waConfig, rows },
+      _sys: { notes: state.notes, stages: state.stages, waConfig: state.waConfig },
     }
     const payload = {
       id: 'natuclinic',
@@ -58,12 +58,18 @@ async function sbSave(state: AppState): Promise<void> {
       birthdates: JSON.stringify(state.birthdates),
       vouchers: JSON.stringify(state.vouchers),
       voucher_config: JSON.stringify(vConf),
+      patients_raw: rows,
       updated_at: now,
     }
     const { error } = await SB.from('crm_state').upsert(payload, { onConflict: 'id' })
     if (!error) { ls('nc_sb_ts', now); return }
 
-    const { error: err2 } = await SB.from('crm_state').upsert({ ...payload, updated_at: undefined }, { onConflict: 'id' })
+    // fallback: try without updated_at (table may not have that column)
+    const { patients_raw: pr, updated_at: _ua, ...payloadNoTs } = payload
+    const { error: err2 } = await SB.from('crm_state').upsert(
+      { ...payloadNoTs, patients_raw: pr },
+      { onConflict: 'id' }
+    )
     if (!err2) { ls('nc_sb_ts', now) }
     else console.warn('sbSave failed:', err2.message)
   } catch (e: unknown) {
@@ -124,14 +130,11 @@ export async function loadPersist(): Promise<Partial<AppState>> {
     const stParsed = parse(st as string, [] as Stage[])
     result.stages = Array.isArray(stParsed) && stParsed.length ? stParsed : JSON.parse(JSON.stringify(DEFAULT_STAGES))
 
-    let p: string | null = null
-    if (!preferLocal && sysData?.rows) {
-      p = sysData.rows as string
-    } else {
-      p = preferLocal
-        ? (ls('nc_rows') ?? (sbData?.patients_raw as string | null) ?? sysData?.rows as string | null)
-        : ((sbData?.patients_raw as string | null) ?? sysData?.rows as string | null ?? ls('nc_rows'))
-    }
+    // patients_raw: dedicated Supabase column has priority over _sys.rows legacy
+    const sbRaw = sbData?.patients_raw as string | null
+    const p = preferLocal
+      ? (ls('nc_rows') ?? sbRaw)
+      : (sbRaw ?? ls('nc_rows'))
 
     if (p) {
       if (p !== ls('nc_rows')) ls('nc_rows', p)
