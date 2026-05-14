@@ -77,6 +77,10 @@ export default function App() {
   useEffect(() => { init() }, [init])
 
   useEffect(() => {
+    if (modalContent) setSidebarOpen(false)
+  }, [modalContent])
+
+  useEffect(() => {
     document.body.style.overflow = (modalContent || sidebarOpen) ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [modalContent, sidebarOpen])
