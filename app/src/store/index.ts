@@ -3,7 +3,7 @@ import { DEFAULT_STAGES } from '../lib/constants'
 import { persist as persistStorage, loadPersist } from '../lib/storage'
 import { buildPatients, parseCSV, mergeRows, rmkCat, readFileWithEncoding } from '../lib/csv'
 import { SB } from '../lib/supabase'
-import type { Patient, Stage, WaConfig, VoucherConfig, NoteEntry, VoucherEntry, FollowupEntry, PageId, Period } from '../lib/types'
+import type { Patient, Stage, WaConfig, VoucherConfig, NoteEntry, VoucherEntry, FollowupEntry, VipEntry, PageId, Period } from '../lib/types'
 import type { RawRow } from '../lib/csv'
 
 interface CRMStore {
@@ -15,6 +15,7 @@ interface CRMStore {
   vouchers: Record<string, VoucherEntry>
   notes: Record<string, NoteEntry[]>
   followups: Record<string, FollowupEntry>
+  vipData: Record<string, VipEntry>
   voucherConfig: VoucherConfig
   waConfig: WaConfig
   stages: Stage[]
@@ -59,6 +60,7 @@ interface CRMStore {
   saveNewLead: (data: { nome: string; tel: string; email: string; cpf: string; bday: string; proc: string; obs: string }) => void
   deletePat: (id: string) => void
   importBdays: (file: File) => Promise<void>
+  importVip: (file: File) => Promise<void>
   sendViaAPI: (patientId: string) => Promise<void>
 }
 
@@ -71,6 +73,7 @@ function getState(store: CRMStore) {
     vouchers: store.vouchers,
     notes: store.notes,
     followups: store.followups,
+    vipData: store.vipData,
     voucherConfig: store.voucherConfig,
     waConfig: store.waConfig,
     stages: store.stages,
@@ -87,6 +90,7 @@ export const useCRM = create<CRMStore>((set, get) => ({
   vouchers: {},
   notes: {},
   followups: {},
+  vipData: {},
   voucherConfig: { discount: '10%' },
   waConfig: { token: '', phoneNumberId: '', templateName: 'hello_world', enabled: false },
   stages: JSON.parse(JSON.stringify(DEFAULT_STAGES)),
@@ -119,6 +123,7 @@ export const useCRM = create<CRMStore>((set, get) => ({
       vouchers: loaded.vouchers || {},
       notes: loaded.notes || {},
       followups: loaded.followups || {},
+      vipData: loaded.vipData || {},
       voucherConfig: loaded.voucherConfig || { discount: '10%' },
       waConfig: loaded.waConfig || { token: '', phoneNumberId: '', templateName: 'hello_world', enabled: false },
       stages: loaded.stages || JSON.parse(JSON.stringify(DEFAULT_STAGES)),
@@ -366,6 +371,40 @@ export const useCRM = create<CRMStore>((set, get) => ({
     }
   },
 
+  importVip: async (file) => {
+    const s = get()
+    try {
+      const txt = await readFileWithEncoding(file)
+      const normalized = txt.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+      const lines = normalized.split('\n').filter(l => l.trim())
+      if (lines.length < 2) { s.showToast('❌ Arquivo inválido'); return }
+      const sep = lines[0].includes(';') ? ';' : ','
+      const hdr = lines[0].split(sep).map(h => h.trim())
+      const idCol = hdr.findIndex(h => h.includes('ID') || h.includes('Amigo'))
+      const totalCol = hdr.findIndex(h => h.includes('Total') || h.includes('R$'))
+      const orcCol = hdr.findIndex(h => h.includes('amento') || h.includes('rca'))
+      if (idCol < 0 || totalCol < 0) { s.showToast('❌ Colunas "ID Amigo" e "Total R$" não encontradas'); return }
+      let ok = 0
+      const vipData: Record<string, VipEntry> = {}
+      lines.slice(1).forEach(l => {
+        const cols = l.split(sep).map(c => c.trim().replace(/^"|"$/g, ''))
+        const id = cols[idCol]
+        const totalStr = cols[totalCol]
+        if (!id || !totalStr) return
+        const total = parseFloat(totalStr.replace(/\./g, '').replace(',', '.'))
+        if (isNaN(total) || total <= 0) return
+        const orcamentos = orcCol >= 0 ? parseInt(cols[orcCol]) || 0 : 0
+        vipData[id] = { total, orcamentos }
+        ok++
+      })
+      set({ vipData })
+      persistStorage({ ...getState(get()), vipData })
+      s.showToast(`✅ ${ok} pacientes VIP importados`)
+    } catch (e: unknown) {
+      s.showToast('❌ ' + (e as Error).message)
+    }
+  },
+
   sendViaAPI: async (patientId) => {
     const { patients, waConfig, showToast, markSent } = get()
     const p = patients.find(x => x.id === patientId)
@@ -453,4 +492,23 @@ export function thisMonthBdays(patients: Patient[], birthdates: Record<string, s
   return patients
     .filter(p => { const b = birthdates[p.id]; return b && b.slice(3, 5) === mm })
     .sort((a, b) => parseInt(birthdates[a.id] || '99') - parseInt(birthdates[b.id] || '99'))
+}
+
+export type VipTier = 'diamante' | 'ouro' | 'prata'
+
+export const VIP_TIERS: Record<VipTier, { label: string; emoji: string; cor: string; bg: string; bord: string; min: number }> = {
+  diamante: { label: 'Diamante', emoji: '💎', cor: '#67E8F9', bg: 'rgba(103,232,249,.12)', bord: 'rgba(103,232,249,.3)', min: 15000 },
+  ouro:     { label: 'Ouro',     emoji: '🥇', cor: '#FBBF24', bg: 'rgba(251,191,36,.12)',  bord: 'rgba(251,191,36,.3)',  min: 8000  },
+  prata:    { label: 'Prata',    emoji: '🥈', cor: '#94A3B8', bg: 'rgba(148,163,184,.12)', bord: 'rgba(148,163,184,.3)', min: 4000  },
+}
+
+export function vipTier(total: number): VipTier | null {
+  if (total >= 15000) return 'diamante'
+  if (total >= 8000) return 'ouro'
+  if (total >= 4000) return 'prata'
+  return null
+}
+
+export function fmtBRL(value: number): string {
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 }

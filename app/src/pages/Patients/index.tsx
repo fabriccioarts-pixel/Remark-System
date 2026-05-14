@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useCRM, filt, patientRmkCat } from '../../store'
+import { useCRM, filt, patientRmkCat, vipTier, VIP_TIERS } from '../../store'
 import { TMPLS, WA_SVG } from '../../lib/constants'
 import { waUrl, fmtDate, badgeClass } from '../../lib/utils'
 import { PatientModal } from '../../components/PatientModal'
@@ -9,7 +9,7 @@ import { AddLeadModal } from './AddLeadModal'
 const PER_PAGE = 50
 
 export function Patients() {
-  const { patients, q, period, openModal, markSent } = useCRM()
+  const { patients, q, period, vipData, openModal, markSent } = useCRM()
   const [filter, setFilter] = useState('all')
   const [page, setLocalPage] = useState(1)
   const [ctx, setCtx] = useState<{ id: string; x: number; y: number } | null>(null)
@@ -66,7 +66,13 @@ export function Patients() {
                     onClick={() => openModal(<PatientModal patient={p} />)}
                     onContextMenu={e => { e.preventDefault(); setCtx({ id: p.id, x: e.clientX, y: e.clientY }) }}
                     style={{ cursor: 'pointer' }}>
-                    <td><div style={{ fontWeight: 600 }}>{p.nome}</div><div style={{ fontSize: 10.5, color: 'var(--txt3)' }}>{p.cpf || '–'}</div></td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontWeight: 600 }}>{p.nome}</span>
+                        {(() => { const t = vipData[p.id] && vipTier(vipData[p.id].total); return t ? <span title={`VIP ${VIP_TIERS[t].label}`} style={{ fontSize: 13, lineHeight: 1 }}>{VIP_TIERS[t].emoji}</span> : null })()}
+                      </div>
+                      <div style={{ fontSize: 10.5, color: 'var(--txt3)' }}>{p.cpf || '–'}</div>
+                    </td>
                     <td style={{ whiteSpace: 'nowrap' }}>{p.tel || '–'}</td>
                     <td style={{ whiteSpace: 'nowrap', fontSize: 12.5 }}>{fmtDate(p.last?.data)}</td>
                     <td style={{ fontSize: 12, maxWidth: 150, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.last?.tipo || '–'}</td>

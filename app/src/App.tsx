@@ -11,6 +11,7 @@ import { Kanban } from './pages/Kanban'
 import { Funnel } from './pages/Funnel'
 import { Birthdays } from './pages/Birthdays'
 import { Reativar } from './pages/Reativar'
+import { Vip } from './pages/Vip'
 
 function EmptyState() {
   const { importCSV } = useCRM()
@@ -63,6 +64,7 @@ function PageContent() {
     case 'funnel':      return <Funnel />
     case 'bdays':       return <Birthdays />
     case 'reativar':    return <Reativar />
+    case 'vip':         return <Vip />
     default:            return <div className="content"><EmptyState /></div>
   }
 }

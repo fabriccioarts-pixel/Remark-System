@@ -45,6 +45,11 @@ export interface FollowupEntry {
   note: string
 }
 
+export interface VipEntry {
+  total: number
+  orcamentos: number
+}
+
 export interface WaConfig {
   token: string
   phoneNumberId: string
@@ -56,6 +61,6 @@ export interface VoucherConfig {
   discount: string
 }
 
-export type PageId = 'dashboard' | 'patients' | 'remarketing' | 'reativar' | 'kanban' | 'funnel' | 'bdays'
+export type PageId = 'dashboard' | 'patients' | 'remarketing' | 'reativar' | 'kanban' | 'funnel' | 'bdays' | 'vip'
 
 export type Period = 'all' | '30' | '90' | '180' | 'year'

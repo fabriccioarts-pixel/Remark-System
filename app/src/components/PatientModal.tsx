@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { useCRM } from '../store'
+import { useCRM, vipTier, VIP_TIERS, fmtBRL } from '../store'
 import { ICO, TMPLS, WA_SVG } from '../lib/constants'
 import { waUrl, getInitials, badgeClass } from '../lib/utils'
 import { rmkCat } from '../lib/csv'
@@ -24,7 +24,10 @@ function fmtFollowupDate(iso: string): string {
 }
 
 export function PatientModal({ patient: p }: { patient: Patient }) {
-  const { kanban, stages, birthdates, notes, followups, saveBday, addNote, deleteNote, setKanban, setFollowup, clearFollowup, showToast, openModal, closeModal } = useCRM()
+  const { kanban, stages, birthdates, notes, followups, vipData, saveBday, addNote, deleteNote, setKanban, setFollowup, clearFollowup, showToast, openModal, closeModal } = useCRM()
+  const vipEntry = vipData[p.id]
+  const tier = vipEntry ? vipTier(vipEntry.total) : null
+  const tierCfg = tier ? VIP_TIERS[tier] : null
   const [noteText, setNoteText] = useState('')
   const followupNoteRef = useRef<HTMLInputElement>(null)
 
@@ -59,6 +62,19 @@ export function PatientModal({ patient: p }: { patient: Patient }) {
         </div>
         <button onClick={closeModal} style={{ position: 'absolute', top: 0, right: 0, width: 28, height: 28, background: 'var(--surf3)', border: '1px solid var(--bord)', borderRadius: 7, cursor: 'pointer', color: 'var(--txt3)', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
       </div>
+
+      {/* VIP banner */}
+      {tierCfg && vipEntry && (
+        <div style={{ background: tierCfg.bg, border: `1px solid ${tierCfg.bord}`, borderRadius: 9, padding: '10px 14px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 22 }}>{tierCfg.emoji}</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: tierCfg.cor }}>CLIENTE {tierCfg.label.toUpperCase()}</div>
+            <div style={{ fontSize: 11.5, color: 'var(--txt2)', marginTop: 2 }}>
+              {fmtBRL(vipEntry.total)} em compras · {vipEntry.orcamentos} orçamento{vipEntry.orcamentos !== 1 ? 's' : ''}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Info grid */}
       <div className="lic-grid" style={{ marginBottom: 18 }}>

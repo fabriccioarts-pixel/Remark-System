@@ -1,7 +1,7 @@
 import { SB } from './supabase'
 import { buildPatients } from './csv'
 import { DEFAULT_STAGES } from './constants'
-import type { Stage, WaConfig, VoucherConfig, NoteEntry, VoucherEntry, FollowupEntry } from './types'
+import type { Stage, WaConfig, VoucherConfig, NoteEntry, VoucherEntry, FollowupEntry, VipEntry } from './types'
 
 export interface AppState {
   patients: ReturnType<typeof buildPatients>
@@ -11,6 +11,7 @@ export interface AppState {
   vouchers: Record<string, VoucherEntry>
   notes: Record<string, NoteEntry[]>
   followups: Record<string, FollowupEntry>
+  vipData: Record<string, VipEntry>
   voucherConfig: VoucherConfig
   waConfig: WaConfig
   stages: Stage[]
@@ -39,6 +40,7 @@ export function persist(state: AppState): void {
   ls('nc_stages', JSON.stringify(state.stages))
   ls('nc_notes', JSON.stringify(state.notes))
   ls('nc_followups', JSON.stringify(state.followups))
+  ls('nc_vip', JSON.stringify(state.vipData))
   ls('nc_updated', new Date().toISOString())
 
   if (sbSaveTimer) clearTimeout(sbSaveTimer)
@@ -51,7 +53,7 @@ async function sbSave(state: AppState): Promise<void> {
     const rows = ls('nc_rows') || '[]'
     const vConf = {
       ...state.voucherConfig,
-      _sys: { notes: state.notes, stages: state.stages, waConfig: state.waConfig, followups: state.followups },
+      _sys: { notes: state.notes, stages: state.stages, waConfig: state.waConfig, followups: state.followups, vipData: state.vipData },
     }
     const payload = {
       id: 'natuclinic',
@@ -128,6 +130,9 @@ export async function loadPersist(): Promise<Partial<AppState>> {
     // followups stored in _sys (no separate Supabase column needed)
     const fu = sysData?.followups ?? getS('followups')
     result.followups = fu ? parse(fu as string, {}) : {}
+
+    const vip = sysData?.vipData ?? getS('vip')
+    result.vipData = vip ? parse(vip as string, {}) : {}
 
     const st = (sysData?.stages ?? getS('stages'))
     const stParsed = parse(st as string, [] as Stage[])
