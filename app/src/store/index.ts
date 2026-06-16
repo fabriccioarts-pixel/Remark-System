@@ -105,7 +105,11 @@ export const useCRM = create<CRMStore>((set, get) => ({
 
   init: async () => {
     const loaded = await loadPersist()
-    const migrate: Record<string, string> = { lead: 'entrar', conf: 'retornou' }
+    const migrate: Record<string, string> = { 
+      lead: 'base', entrar: 'base', 
+      interes: 'contato', 
+      retornou: 'andamento', conf: 'andamento' 
+    }
     const kanban = { ...(loaded.kanban || {}) }
     Object.keys(kanban).forEach(id => { if (migrate[kanban[id]]) kanban[id] = migrate[kanban[id]] })
 
@@ -114,6 +118,9 @@ export const useCRM = create<CRMStore>((set, get) => ({
     if (patients.length && Object.keys(kanban).length) {
       patients = patients.map(p => ({ ...p, stage: kanban[p.id] || p.stage }))
     }
+    
+    // Força o uso dos novos DEFAULT_STAGES e já persiste
+    const newStages = JSON.parse(JSON.stringify(DEFAULT_STAGES))
 
     set({
       patients,
@@ -126,9 +133,12 @@ export const useCRM = create<CRMStore>((set, get) => ({
       vipData: loaded.vipData || {},
       voucherConfig: loaded.voucherConfig || { discount: '10%' },
       waConfig: loaded.waConfig || { token: '', phoneNumberId: '', templateName: 'hello_world', enabled: false },
-      stages: loaded.stages || JSON.parse(JSON.stringify(DEFAULT_STAGES)),
+      stages: newStages,
       loaded: true,
     })
+    
+    // Atualiza o localstorage imediatamente para sobrescrever estágios velhos
+    persistStorage({ ...getState(get()), kanban, stages: newStages, patients })
   },
 
   setPage: (p) => set({ page: p }),
@@ -304,7 +314,7 @@ export const useCRM = create<CRMStore>((set, get) => ({
     rows.unshift(newRow)
     localStorage.setItem('nc_rows', JSON.stringify(rows))
 
-    const kanban = { ...get().kanban, [leadId]: 'entrar' }
+    const kanban = { ...get().kanban, [leadId]: 'base' }
     const birthdates = { ...get().birthdates }
     if (bday?.match(/^\d{2}\/\d{2}$/)) birthdates[leadId] = bday
 
@@ -381,9 +391,9 @@ export const useCRM = create<CRMStore>((set, get) => ({
       const sep = lines[0].includes(';') ? ';' : ','
       const hdr = lines[0].split(sep).map(h => h.trim())
       const idCol = hdr.findIndex(h => h.includes('ID') || h.includes('Amigo'))
-      const totalCol = hdr.findIndex(h => h.includes('Total') || h.includes('R$'))
-      const orcCol = hdr.findIndex(h => h.includes('amento') || h.includes('rca'))
-      if (idCol < 0 || totalCol < 0) { s.showToast('❌ Colunas "ID Amigo" e "Total R$" não encontradas'); return }
+      const totalCol = hdr.findIndex(h => h.toLowerCase().includes('total'))
+      const orcCol = hdr.findIndex(h => h.toLowerCase().includes('orca') || h.toLowerCase().includes('orça') || h.toLowerCase().includes('atendimento'))
+      if (idCol < 0 || totalCol < 0) { s.showToast('❌ Colunas "ID Amigo" e "Total" não encontradas'); return }
       let ok = 0
       const vipData: Record<string, VipEntry> = {}
       lines.slice(1).forEach(l => {

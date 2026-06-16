@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useCRM, filt, patientRmkCat, vipTier, VIP_TIERS } from '../../store'
+import { useCRM, filt, patientRmkCat, vipTier, VIP_TIERS, fmtBRL } from '../../store'
 import { TMPLS, WA_SVG } from '../../lib/constants'
 import { waUrl, fmtDate, badgeClass } from '../../lib/utils'
 import { PatientModal } from '../../components/PatientModal'
@@ -13,12 +13,40 @@ export function Patients() {
   const [filter, setFilter] = useState('all')
   const [page, setLocalPage] = useState(1)
   const [ctx, setCtx] = useState<{ id: string; x: number; y: number } | null>(null)
+  const ticket = Number(localStorage.getItem('nc_ticket')) || 350
 
   let pts = filt(patients, q, period)
   if (filter !== 'all') pts = pts.filter(p => (p.last?.status || '').toLowerCase() === filter)
   const tot = pts.length
   const totPg = Math.ceil(tot / PER_PAGE)
   const slice = pts.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+
+  const exportBroadcast = () => {
+    const sorted = [...patients]
+      .filter(p => p.tel)
+      .map(p => ({ p, spent: vipData[p.id]?.total ?? (p.total * ticket) }))
+      .sort((a, b) => b.spent - a.spent)
+      .slice(0, 256)
+
+    const rows = sorted.map(({ p }) => {
+      const digits = p.tel.replace(/\D/g, '')
+      const phone = digits.startsWith('55') ? digits : '55' + digits
+      return `${p.nome},${phone}`
+    })
+
+    const csv = [
+      'Insira o nome completo e o telefone de cada destinatário em uma linha separada. Você pode adicionar até 256 destinatários a um público.',
+      '',
+      'Nome completo,Telefone',
+      '',
+      ...rows,
+    ].join('\n')
+
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }))
+    a.download = 'business_broadcast_audience.csv'
+    a.click()
+  }
 
   const exportPats = () => {
     let csv = 'Nome;Telefone;Email;CPF;Ultimo Atendimento;Tipo;Status;Total\n'
@@ -46,12 +74,13 @@ export function Patients() {
           </div>
           <button className="btn btn-s" style={{ padding: '7px 14px', fontSize: 12 }} onClick={() => openModal(<AddLeadModal />)}>+ Novo Lead</button>
           <button className="btn btn-p" style={{ padding: '7px 14px', fontSize: 12 }} onClick={exportPats}>⬇ Exportar</button>
+          <button className="btn btn-s" style={{ padding: '7px 14px', fontSize: 12 }} onClick={exportBroadcast} title="Top 256 por investimento — formato WhatsApp Business Broadcast">📡 Broadcast</button>
         </div>
 
         <div className="table-wrap" style={{ overflowX: 'auto' }}>
           <table>
             <thead>
-              <tr><th>Paciente</th><th>Telefone</th><th>Último Atend.</th><th>Tipo</th><th>Médico</th><th>Status</th><th>#</th><th>Ações</th></tr>
+              <tr><th>Paciente</th><th>Telefone</th><th>Último Atend.</th><th>Tipo</th><th>Médico</th><th>Status</th><th>Gasto</th><th>#</th><th>Ações</th></tr>
             </thead>
             <tbody>
               {slice.map(p => {
@@ -61,6 +90,9 @@ export function Patients() {
                 const med = (p.last?.medico || '–')
                   .replace('Dr. Julimar de Meneses Barbosa', 'Dr. Julimar')
                   .replace('Dra. Débora Neres de Oliveira Meneses', 'Dra. Débora')
+                const vip = vipData[p.id]
+                const spent = vip ? vip.total : (p.total * ticket)
+                const isReal = !!vip
                 return (
                   <tr key={p.id}
                     onClick={() => openModal(<PatientModal patient={p} />)}
@@ -78,7 +110,13 @@ export function Patients() {
                     <td style={{ fontSize: 12, maxWidth: 150, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.last?.tipo || '–'}</td>
                     <td style={{ fontSize: 12, color: 'var(--txt2)' }}>{med}</td>
                     <td><span className={`badge ${badgeClass(p.last?.status || '')}`}>{p.last?.status || '–'}</span></td>
-                    <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--gold)' }}>{p.total}</td>
+                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 13, fontWeight: isReal ? 700 : 500, color: isReal ? 'var(--gold)' : 'var(--txt2)' }}>
+                        {fmtBRL(spent)}
+                      </div>
+                      {!isReal && p.total > 0 && <div style={{ fontSize: 9.5, color: 'var(--txt3)' }}>Estimado</div>}
+                    </td>
+                    <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--txt2)' }}>{p.total}</td>
                     <td onClick={e => e.stopPropagation()}>
                       {p.tel && (
                         <a href={waUrl(p.tel, msg)} target="natuclinic_wa" className="btn btn-wa" style={{ padding: '4px 9px', fontSize: 11 }}

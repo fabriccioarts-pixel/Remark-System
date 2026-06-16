@@ -1,12 +1,11 @@
 import type { Stage } from './types'
 
 export const DEFAULT_STAGES: Stage[] = [
-  { id: 'entrar',   label: 'Entrar em Contato', ico: 'msg',    dot: '#5A6080' },
+  { id: 'base',     label: 'Base de Clientes',   ico: 'users',  dot: '#5A6080' },
   { id: 'contato',  label: 'Em Contato',         ico: 'phone',  dot: '#4A7FA5' },
-  { id: 'interes',  label: 'Interessado',         ico: 'star',   dot: '#B8965A' },
-  { id: 'agend',    label: 'Agendado',            ico: 'cal',    dot: '#7C6A3E' },
-  { id: 'retornou', label: 'Retornou',            ico: 'target', dot: '#4A9E7A' },
-  { id: 'nao',      label: 'Não Contatar',        ico: 'x',      dot: '#7A3A3A' },
+  { id: 'agend',    label: 'Agendado',           ico: 'cal',    dot: '#B8965A' },
+  { id: 'andamento',label: 'Em Andamento',       ico: 'star',   dot: '#4A9E7A' },
+  { id: 'nao',      label: 'Não Contatar',       ico: 'x',      dot: '#7A3A3A' },
 ]
 
 export const STAGE_COLORS = [
@@ -45,6 +44,7 @@ export const ICO: Record<string, string> = {
   clock:   `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
   sprout:  `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 1 1 4.1C13 10 11.9 9.1 11 7.4c1.3-.2 2.2-.1 3.1.6z"/></svg>`,
   search:  `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+  money:   `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
 }
 
 export interface TmplDef {
@@ -111,8 +111,113 @@ export const TMPLS: Record<string, TmplDef> = {
   },
 }
 
+export interface CampanhaDef {
+  id: string
+  label: string
+  emoji: string
+  cor: string
+  preco: string
+  meta: string
+  publico: string[]
+  msg: (nome: string) => string
+}
+
+export const CAMPANHAS: CampanhaDef[] = [
+  {
+    id: 'camp_botox',
+    label: 'Botox — Prioridade Máxima',
+    emoji: '💉',
+    cor: '#FFC2C2',
+    preco: '10x de R$ 85,00',
+    meta: '20 pacientes',
+    publico: ['botox'],
+    msg: n => `Olá, ${fn(n)}! 👋\n\nAqui é a equipe da *Natuclinic.*\n\nTemos uma condição especial *esta semana* para o seu Botox:\n\n💉 *10x de R$ 85,00*\n\n🎁 E de presente, você ganha um *Peeling Renovador Facial* — sem custo adicional.\n\nÉ a oportunidade ideal para renovar o Botox e já cuidar da pele ao mesmo tempo.\n\nTemos horários disponíveis essa semana. Quer garantir o seu?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+  },
+  {
+    id: 'camp_harmoniz',
+    label: 'Harmonização Facial — Paciente Modelo',
+    emoji: '✨',
+    cor: '#FEF3C7',
+    preco: 'R$ 2.000,00 (10x sem juros)',
+    meta: '4 pacientes',
+    publico: ['harmoniz', 'estetica'],
+    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nEstamos com uma oportunidade exclusiva esta semana:\n\n✨ *Harmonização Facial — 4ml de ácido hialurônico*\n💰 *R$ 2.000,00 — 10x sem juros*\n\nIsso equivale a R$ 500,00 por ml, em um protocolo supervisionado pela *Dra. Débora.*\n\nAs vagas são limitadas e a seleção é exclusiva. Você foi lembrada porque acreditamos que seria uma candidata perfeita para esse protocolo.\n\nQuer saber mais?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+  },
+  {
+    id: 'camp_harmone',
+    label: 'Harmone Bee — Emagrecimento',
+    emoji: '🐝',
+    cor: '#D1FAE5',
+    preco: 'R$ 3.500,00 (era R$ 6.800)',
+    meta: '10 pacientes',
+    publico: ['ortomol', 'retorno', 'injet'],
+    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nTemos algo especial para você esta semana — o nosso programa completo de emagrecimento *Harmone Bee:*\n\n✅ Criolipólise\n✅ Suplementação completa\n✅ Cinta modeladora\n✅ 4 sessões de Detox\n✅ 6 Retornos de acompanhamento\n✅ 5 Manejos alimentares\n\n*De R$ 6.800,00 por apenas R$ 3.500,00*\n\nUm programa pensado do início ao fim para você ter resultado real — com acompanhamento em cada etapa.\n\nInteressou? Posso te passar mais detalhes!\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+  },
+  {
+    id: 'camp_renovacao',
+    label: 'Renovação Facial',
+    emoji: '🌸',
+    cor: '#FCE7F3',
+    preco: 'R$ 400,00',
+    meta: 'Agenda cheia',
+    publico: ['estetica', 'harmoniz', 'ortomol'],
+    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nQue tal dar uma renovação à sua pele esta semana?\n\n🌸 *Limpeza de Pele + Microagulhamento*\n💰 *R$ 400,00*\n\nUm combo que une renovação celular com estímulo de colágeno — para uma pele com mais textura, viço e luminosidade.\n\nTemos agenda disponível. Quer marcar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+  },
+  {
+    id: 'camp_combo_botox',
+    label: 'Combo Botox + Revitalização',
+    emoji: '💎',
+    cor: '#EDE9FE',
+    preco: 'R$ 1.399,90',
+    meta: 'Agenda cheia',
+    publico: ['botox', 'harmoniz'],
+    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nTemos um combo especial para você esta semana:\n\n💎 *Botox + Revitalização Facial*\n💰 *R$ 1.399,90*\n\nUm protocolo completo para suavizar rugas e revitalizar a pele — tudo em um único atendimento.\n\nQuer aproveitar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+  },
+  {
+    id: 'camp_massagem',
+    label: 'Massagem Relaxante + EZ Body',
+    emoji: '💆',
+    cor: '#DBEAFE',
+    preco: 'R$ 379,90',
+    meta: 'Agenda cheia',
+    publico: ['reab', 'intrart', 'ozonio'],
+    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nVocê merece um momento só seu. 💆‍♀️\n\n✔ *Massagem Relaxante + EZ Body*\n💰 *R$ 379,90*\n\nUma experiência para relaxar os músculos, reduzir o estresse e recuperar o equilíbrio — de dentro para fora.\n\nTemos horários disponíveis. Quer agendar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+  },
+  {
+    id: 'camp_ouvido',
+    label: 'Limpeza de Ouvido',
+    emoji: '👂',
+    cor: '#F0FDF4',
+    preco: 'R$ 89,90',
+    meta: 'Agenda cheia',
+    publico: ['ortomol', 'retorno'],
+    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nSabia que temos um procedimento rápido e seguro para *limpeza de ouvido*?\n\n👂 *Remoção de cerúmen — R$ 89,90*\n\nÉ rápido, indolor e faz uma diferença enorme no conforto auditivo.\n\nQuer agendar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+  },
+  {
+    id: 'camp_drenagem',
+    label: 'Drenagem + Hybrius',
+    emoji: '💧',
+    cor: '#E0F2FE',
+    preco: 'R$ 337,00',
+    meta: 'Agenda cheia',
+    publico: ['estetica', 'reab'],
+    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nPara quem quer leveza e definição corporal, temos uma opção especial:\n\n💧 *Drenagem + Hybrius*\n💰 *R$ 337,00*\n\nReduz retenção de líquidos, proporciona sensação de leveza e auxilia na modelagem corporal.\n\nQuer aproveitar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+  },
+  {
+    id: 'camp_labial',
+    label: 'Preenchimento Labial + Revitalização',
+    emoji: '💋',
+    cor: '#FFF1F2',
+    preco: 'R$ 950,00',
+    meta: 'Agenda cheia',
+    publico: ['harmoniz', 'estetica', 'botox'],
+    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nUm combo para quem quer resultados harmoniosos e naturais:\n\n💋 *Preenchimento Labial + Revitalização Facial*\n💰 *R$ 950,00*\n\nLábios mais definidos e hidratados, com pele iluminada e revitalizada — em um único protocolo.\n\nTemos horários disponíveis esta semana. Quer agendar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+  },
+]
+
 export const META: Record<string, { title: string; sub: string }> = {
   dashboard:   { title: 'Dashboard',        sub: 'Visão geral do CRM Natuclinic' },
+  campanha:    { title: 'Campanha da Semana', sub: 'Scripts e listas por campanha — envio via WhatsApp' },
   patients:    { title: 'Pacientes',         sub: 'Histórico e gestão de pacientes' },
   remarketing: { title: 'Remarketing',       sub: 'Mensagens personalizadas via WhatsApp' },
   reativar:    { title: 'Reativar',          sub: 'Pacientes sem atendimento há 3–6 meses' },

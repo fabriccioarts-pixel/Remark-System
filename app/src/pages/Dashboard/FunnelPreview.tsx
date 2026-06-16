@@ -41,14 +41,11 @@ export function FunnelPreview() {
     ['#F43F5E', '#8B0A29'], ['#F59E0B', '#854106'], ['#10B981', '#075E43'],
   ]
 
-  const fStages = [
-    { lbl: 'TOTAL DE LEADS', val: pts.length, grad: ['#334155', '#0F172A'] as [string, string] },
-    ...activeStages.map((st, i) => ({
-      lbl: st.label.toUpperCase(),
-      val: pts.filter(p => stageIdx(p.id) >= i && kanban[p.id] !== 'nao').length,
-      grad: grads[i] || grads[grads.length - 1],
-    })),
-  ]
+  const fStages = activeStages.map((st, i) => ({
+    lbl: st.label.toUpperCase(),
+    val: pts.filter(p => stageIdx(p.id) >= i && kanban[p.id] !== 'nao').length,
+    grad: grads[i] || grads[grads.length - 1],
+  }))
 
   const convertidos = pts.filter(p => stageIdx(p.id) >= activeStages.length - 1 && kanban[p.id] !== 'nao').length
   const avancaram = pts.filter(p => stageIdx(p.id) >= 1 && kanban[p.id] !== 'nao').length

@@ -68,7 +68,7 @@ export function buildPatients(rows: RawRow[], kanban: Record<string, string>): P
     if (!m) return
     const id = m[1], nome = m[2].trim()
     if (!map.has(id)) {
-      map.set(id, { id, nome, cpf: r['CPF'] || '', tel: r['Telefone'] || '', email: r['Email'] || '', atend: [], last: null, total: 0, stage: 'entrar' })
+      map.set(id, { id, nome, cpf: r['CPF'] || '', tel: r['Telefone'] || '', email: r['Email'] || '', atend: [], last: null, total: 0, stage: 'base' })
     }
     const p = map.get(id)!
     if (!p.tel && r['Telefone']) p.tel = r['Telefone']
@@ -89,7 +89,7 @@ export function buildPatients(rows: RawRow[], kanban: Record<string, string>): P
     })
     p.last = p.atend[0] || null
     p.total = p.atend.length
-    p.stage = kanban[p.id] || 'entrar'
+    p.stage = kanban[p.id] || 'base'
   })
   return pts.sort((a, b) => {
     const da = a.last ? parseDate(a.last.data) : null

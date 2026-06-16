@@ -12,6 +12,7 @@ import { Funnel } from './pages/Funnel'
 import { Birthdays } from './pages/Birthdays'
 import { Reativar } from './pages/Reativar'
 import { Vip } from './pages/Vip'
+import { Campanha } from './pages/Campanha'
 
 function EmptyState() {
   const { importCSV } = useCRM()
@@ -65,6 +66,7 @@ function PageContent() {
     case 'bdays':       return <Birthdays />
     case 'reativar':    return <Reativar />
     case 'vip':         return <Vip />
+    case 'campanha':    return <Campanha />
     default:            return <div className="content"><EmptyState /></div>
   }
 }
