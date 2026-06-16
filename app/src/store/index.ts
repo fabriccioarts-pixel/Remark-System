@@ -140,21 +140,26 @@ export const useCRM = create<CRMStore>((set, get) => ({
     })
     persistStorage({ ...getState(get()), kanban, stages: newStages, patients })
 
-    // Phase 2: sync Supabase in background — update if newer data found
+    // Phase 2: sync Supabase in background — fill gaps and pick richer data
     syncSupabase().then(sb => {
       if (!sb) return
+      const cur = get()
       const { kanban: k2, patients: p2, newStages: s2 } = applyLoaded(sb)
+
+      const bigger = <T extends Record<string, unknown>>(a: T, b: T): T =>
+        Object.keys(a).length >= Object.keys(b).length ? a : b
+
       set({
-        patients: p2.length ? p2 : get().patients,
-        kanban: k2,
-        rmkSent: sb.rmkSent || get().rmkSent,
-        birthdates: sb.birthdates || get().birthdates,
-        vouchers: sb.vouchers || get().vouchers,
-        notes: sb.notes || get().notes,
-        followups: sb.followups || get().followups,
-        vipData: sb.vipData || get().vipData,
-        voucherConfig: sb.voucherConfig || get().voucherConfig,
-        waConfig: sb.waConfig || get().waConfig,
+        patients: p2.length > cur.patients.length ? p2 : cur.patients,
+        kanban: bigger(k2 as Record<string, unknown>, cur.kanban as Record<string, unknown>) as typeof cur.kanban,
+        rmkSent: bigger(sb.rmkSent || {}, cur.rmkSent),
+        birthdates: bigger(sb.birthdates || {}, cur.birthdates),
+        vouchers: bigger(sb.vouchers || {}, cur.vouchers),
+        notes: bigger((sb.notes || {}) as Record<string, unknown>, cur.notes as Record<string, unknown>) as typeof cur.notes,
+        followups: bigger(sb.followups || {}, cur.followups),
+        vipData: bigger(sb.vipData || {}, cur.vipData),
+        voucherConfig: sb.voucherConfig || cur.voucherConfig,
+        waConfig: sb.waConfig?.token ? sb.waConfig : cur.waConfig,
         stages: s2,
       })
     }).catch(() => {})

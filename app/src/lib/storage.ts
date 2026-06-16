@@ -139,7 +139,7 @@ export function loadLocal(): Partial<AppState> {
   return parseState(getS)
 }
 
-// Background sync with Supabase — call after UI is already shown
+// Background sync with Supabase — always runs after local load to fill any gaps
 export async function syncSupabase(): Promise<Partial<AppState> | null> {
   let sbData: Record<string, unknown> | null = null
   try {
@@ -151,22 +151,15 @@ export async function syncSupabase(): Promise<Partial<AppState> | null> {
     return null
   }
 
-  const localTs = ls('nc_updated')
-  const sbTs = ls('nc_sb_ts')
-  const sbUpdated = sbData?.updated_at as string | undefined
+  if (!sbData) return null
 
-  // If local is newer than last known Supabase sync, prefer local
-  let preferLocal = !!(localTs && (!sbTs || new Date(localTs) > new Date(sbTs)))
-  if (sbUpdated && localTs && new Date(sbUpdated) > new Date(localTs)) preferLocal = false
-
-  // If Supabase has nothing newer, no need to update UI
-  if (preferLocal) return null
-
-  const getS = (key: string, sbKey?: string) => sbData?.[sbKey || key] ?? ls('nc_' + key)
-  const sbRaw = sbData?.patients_raw as string | null
-  const result = parseState(getS, sbRaw)
+  const sbUpdated = sbData.updated_at as string | undefined
   if (sbUpdated) ls('nc_sb_ts', sbUpdated)
-  return result
+
+  // Always parse Supabase data — let init decide what to keep
+  const getS = (key: string, sbKey?: string) => sbData?.[sbKey || key] ?? ls('nc_' + key)
+  const sbRaw = sbData.patients_raw as string | null
+  return parseState(getS, sbRaw)
 }
 
 // Kept for backwards compatibility
