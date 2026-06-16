@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { DEFAULT_STAGES } from '../lib/constants'
-import { persist as persistStorage, loadPersist } from '../lib/storage'
+import { persist as persistStorage, loadLocal, syncSupabase } from '../lib/storage'
 import { buildPatients, parseCSV, mergeRows, rmkCat, readFileWithEncoding } from '../lib/csv'
 import { SB } from '../lib/supabase'
 import type { Patient, Stage, WaConfig, VoucherConfig, NoteEntry, VoucherEntry, FollowupEntry, VipEntry, PageId, Period } from '../lib/types'
@@ -104,41 +104,60 @@ export const useCRM = create<CRMStore>((set, get) => ({
   loaded: false,
 
   init: async () => {
-    const loaded = await loadPersist()
-    const migrate: Record<string, string> = { 
-      lead: 'base', entrar: 'base', 
-      interes: 'contato', 
-      retornou: 'andamento', conf: 'andamento' 
+    const migrate: Record<string, string> = {
+      lead: 'base', entrar: 'base',
+      interes: 'contato',
+      retornou: 'andamento', conf: 'andamento'
     }
-    const kanban = { ...(loaded.kanban || {}) }
-    Object.keys(kanban).forEach(id => { if (migrate[kanban[id]]) kanban[id] = migrate[kanban[id]] })
 
-    // rebuild patients with merged kanban after migration
-    let patients = loaded.patients || []
-    if (patients.length && Object.keys(kanban).length) {
-      patients = patients.map(p => ({ ...p, stage: kanban[p.id] || p.stage }))
+    const applyLoaded = (loaded: Partial<ReturnType<typeof loadLocal>>) => {
+      const kanban = { ...(loaded.kanban || {}) }
+      Object.keys(kanban).forEach(id => { if (migrate[kanban[id]]) kanban[id] = migrate[kanban[id]] })
+      let patients = loaded.patients || []
+      if (patients.length && Object.keys(kanban).length) {
+        patients = patients.map(p => ({ ...p, stage: kanban[p.id] || p.stage }))
+      }
+      const newStages = JSON.parse(JSON.stringify(DEFAULT_STAGES))
+      return { kanban, patients, newStages, loaded }
     }
-    
-    // Força o uso dos novos DEFAULT_STAGES e já persiste
-    const newStages = JSON.parse(JSON.stringify(DEFAULT_STAGES))
 
+    // Phase 1: load from localStorage instantly — no network
+    const local = loadLocal()
+    const { kanban, patients, newStages } = applyLoaded(local)
     set({
       patients,
       kanban,
-      rmkSent: loaded.rmkSent || {},
-      birthdates: loaded.birthdates || {},
-      vouchers: loaded.vouchers || {},
-      notes: loaded.notes || {},
-      followups: loaded.followups || {},
-      vipData: loaded.vipData || {},
-      voucherConfig: loaded.voucherConfig || { discount: '10%' },
-      waConfig: loaded.waConfig || { token: '', phoneNumberId: '', templateName: 'hello_world', enabled: false },
+      rmkSent: local.rmkSent || {},
+      birthdates: local.birthdates || {},
+      vouchers: local.vouchers || {},
+      notes: local.notes || {},
+      followups: local.followups || {},
+      vipData: local.vipData || {},
+      voucherConfig: local.voucherConfig || { discount: '10%' },
+      waConfig: local.waConfig || { token: '', phoneNumberId: '', templateName: 'hello_world', enabled: false },
       stages: newStages,
       loaded: true,
     })
-    
-    // Atualiza o localstorage imediatamente para sobrescrever estágios velhos
     persistStorage({ ...getState(get()), kanban, stages: newStages, patients })
+
+    // Phase 2: sync Supabase in background — update if newer data found
+    syncSupabase().then(sb => {
+      if (!sb) return
+      const { kanban: k2, patients: p2, newStages: s2 } = applyLoaded(sb)
+      set({
+        patients: p2.length ? p2 : get().patients,
+        kanban: k2,
+        rmkSent: sb.rmkSent || get().rmkSent,
+        birthdates: sb.birthdates || get().birthdates,
+        vouchers: sb.vouchers || get().vouchers,
+        notes: sb.notes || get().notes,
+        followups: sb.followups || get().followups,
+        vipData: sb.vipData || get().vipData,
+        voucherConfig: sb.voucherConfig || get().voucherConfig,
+        waConfig: sb.waConfig || get().waConfig,
+        stages: s2,
+      })
+    }).catch(() => {})
   },
 
   setPage: (p) => set({ page: p }),

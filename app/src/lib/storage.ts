@@ -78,30 +78,11 @@ async function sbSave(state: AppState): Promise<void> {
   }
 }
 
-export async function loadPersist(): Promise<Partial<AppState>> {
-  let sbData: Record<string, unknown> | null = null
-  try {
-    const { data, error } = await SB.from('crm_state').select('*').eq('id', 'natuclinic').single()
-    if (!error && data) sbData = data as Record<string, unknown>
-    else if (error) console.warn('Supabase load error:', error.message)
-  } catch (e: unknown) {
-    console.warn('Supabase offline:', (e as Error).message)
-  }
-
-  const localTs = ls('nc_updated')
-  const sbTs = ls('nc_sb_ts')
-  const sbUpdated = sbData?.updated_at as string | undefined
-
-  let preferLocal = !!(localTs && (!sbTs || new Date(localTs) > new Date(sbTs)))
-  if (sbUpdated && localTs && new Date(sbUpdated) > new Date(localTs)) preferLocal = false
-
-  const getS = (key: string, sbKey?: string) =>
-    preferLocal
-      ? (ls('nc_' + key) ?? sbData?.[sbKey || key])
-      : (sbData?.[sbKey || key] ?? ls('nc_' + key))
-
+function parseState(
+  getS: (key: string, sbKey?: string) => unknown,
+  sbRaw?: string | null
+): Partial<AppState> {
   const result: Partial<AppState> = {}
-
   try {
     const k = getS('kanban'); if (k) result.kanban = parse(k as string, {})
     const r = getS('rmk', 'rmk_sent'); if (r) result.rmkSent = parse(r as string, {})
@@ -121,37 +102,74 @@ export async function loadPersist(): Promise<Partial<AppState>> {
       }
     }
 
-    const wc = (sysData?.waConfig ?? getS('waconfig', 'wa_config'))
+    const wc = sysData?.waConfig ?? getS('waconfig', 'wa_config')
     if (wc) result.waConfig = parse(wc as string, { token: '', phoneNumberId: '', templateName: 'hello_world', enabled: false })
 
-    const nts = (sysData?.notes ?? getS('notes'))
+    const nts = sysData?.notes ?? getS('notes')
     if (nts) result.notes = parse(nts as string, {})
 
-    // followups stored in _sys (no separate Supabase column needed)
     const fu = sysData?.followups ?? getS('followups')
     result.followups = fu ? parse(fu as string, {}) : {}
 
     const vip = sysData?.vipData ?? getS('vip')
     result.vipData = vip ? parse(vip as string, {}) : {}
 
-    const st = (sysData?.stages ?? getS('stages'))
+    const st = sysData?.stages ?? getS('stages')
     const stParsed = parse(st as string, [] as Stage[])
     result.stages = Array.isArray(stParsed) && stParsed.length ? stParsed : JSON.parse(JSON.stringify(DEFAULT_STAGES))
 
-    // patients_raw: dedicated Supabase column has priority over _sys.rows legacy
-    const sbRaw = sbData?.patients_raw as string | null
-    const p = preferLocal
-      ? (ls('nc_rows') ?? sbRaw)
-      : (sbRaw ?? ls('nc_rows'))
+    const p = sbRaw !== undefined
+      ? (sbRaw ?? ls('nc_rows'))
+      : ls('nc_rows')
 
     if (p) {
-      if (p !== ls('nc_rows')) ls('nc_rows', p)
-      const rows = parse(p, [])
+      if (sbRaw && p !== ls('nc_rows')) ls('nc_rows', p)
+      const rows = parse(p as string, [])
       result.patients = buildPatients(rows, result.kanban || {})
     }
   } catch (e) {
     console.error('Load error:', e)
   }
-
   return result
+}
+
+// Fast sync load from localStorage only — no network call
+export function loadLocal(): Partial<AppState> {
+  const getS = (key: string) => ls('nc_' + key)
+  return parseState(getS)
+}
+
+// Background sync with Supabase — call after UI is already shown
+export async function syncSupabase(): Promise<Partial<AppState> | null> {
+  let sbData: Record<string, unknown> | null = null
+  try {
+    const { data, error } = await SB.from('crm_state').select('*').eq('id', 'natuclinic').single()
+    if (!error && data) sbData = data as Record<string, unknown>
+    else if (error) { console.warn('Supabase load error:', error.message); return null }
+  } catch (e: unknown) {
+    console.warn('Supabase offline:', (e as Error).message)
+    return null
+  }
+
+  const localTs = ls('nc_updated')
+  const sbTs = ls('nc_sb_ts')
+  const sbUpdated = sbData?.updated_at as string | undefined
+
+  // If local is newer than last known Supabase sync, prefer local
+  let preferLocal = !!(localTs && (!sbTs || new Date(localTs) > new Date(sbTs)))
+  if (sbUpdated && localTs && new Date(sbUpdated) > new Date(localTs)) preferLocal = false
+
+  // If Supabase has nothing newer, no need to update UI
+  if (preferLocal) return null
+
+  const getS = (key: string, sbKey?: string) => sbData?.[sbKey || key] ?? ls('nc_' + key)
+  const sbRaw = sbData?.patients_raw as string | null
+  const result = parseState(getS, sbRaw)
+  if (sbUpdated) ls('nc_sb_ts', sbUpdated)
+  return result
+}
+
+// Kept for backwards compatibility
+export async function loadPersist(): Promise<Partial<AppState>> {
+  return loadLocal()
 }
