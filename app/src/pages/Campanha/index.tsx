@@ -30,11 +30,9 @@ export function Campanha() {
   const { patients, rmkSent, markSent, kanban } = useCRM()
   const [selected, setSelected] = useState<CampanhaDef>(CAMPANHAS[0])
   const [customMsg, setCustomMsg] = useState(CAMPANHAS[0].msg(''))
-  const [editing, setEditing] = useState(false)
 
   useEffect(() => {
     setCustomMsg(selected.msg(''))
-    setEditing(false)
   }, [selected.id])
 
   const eligible = patients
