@@ -131,7 +131,7 @@ export const CAMPANHAS: CampanhaDef[] = [
     preco: '10x de R$ 85,00',
     meta: '20 pacientes',
     publico: ['botox'],
-    msg: n => `Olá, ${fn(n)}! 👋\n\nAqui é a equipe da *Natuclinic.*\n\nTemos uma condição especial *esta semana* para o seu Botox:\n\n💉 *10x de R$ 85,00*\n\n🎁 E de presente, você ganha um *Peeling Renovador Facial* — sem custo adicional.\n\nÉ a oportunidade ideal para renovar o Botox e já cuidar da pele ao mesmo tempo.\n\nTemos horários disponíveis essa semana. Quer garantir o seu?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nTemos uma condição especial *esta semana* para o seu Botox:\n\n*10x de R$ 85,00*\n\nE de presente, você ganha um *Peeling Renovador Facial* — sem custo adicional.\n\nÉ a oportunidade ideal para renovar o Botox e já cuidar da pele ao mesmo tempo.\n\nTemos horários disponíveis essa semana. Quer garantir o seu?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
   },
   {
     id: 'camp_harmoniz',
@@ -141,7 +141,7 @@ export const CAMPANHAS: CampanhaDef[] = [
     preco: 'R$ 2.000,00 (10x sem juros)',
     meta: '4 pacientes',
     publico: ['harmoniz', 'estetica'],
-    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nEstamos com uma oportunidade exclusiva esta semana:\n\n✨ *Harmonização Facial — 4ml de ácido hialurônico*\n💰 *R$ 2.000,00 — 10x sem juros*\n\nIsso equivale a R$ 500,00 por ml, em um protocolo supervisionado pela *Dra. Débora.*\n\nAs vagas são limitadas e a seleção é exclusiva. Você foi lembrada porque acreditamos que seria uma candidata perfeita para esse protocolo.\n\nQuer saber mais?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nEstamos com uma oportunidade exclusiva esta semana:\n\n*Harmonização Facial — 4ml de ácido hialurônico*\n*R$ 2.000,00 — 10x sem juros*\n\nIsso equivale a R$ 500,00 por ml, em um protocolo supervisionado pela *Dra. Débora.*\n\nAs vagas são limitadas e a seleção é exclusiva. Você foi lembrada porque acreditamos que seria uma candidata perfeita para esse protocolo.\n\nQuer saber mais?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
   },
   {
     id: 'camp_harmone',
@@ -151,7 +151,7 @@ export const CAMPANHAS: CampanhaDef[] = [
     preco: 'R$ 3.500,00 (era R$ 6.800)',
     meta: '10 pacientes',
     publico: ['ortomol', 'retorno', 'injet'],
-    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nTemos algo especial para você esta semana — o nosso programa completo de emagrecimento *Harmone Bee:*\n\n✅ Criolipólise\n✅ Suplementação completa\n✅ Cinta modeladora\n✅ 4 sessões de Detox\n✅ 6 Retornos de acompanhamento\n✅ 5 Manejos alimentares\n\n*De R$ 6.800,00 por apenas R$ 3.500,00*\n\nUm programa pensado do início ao fim para você ter resultado real — com acompanhamento em cada etapa.\n\nInteressou? Posso te passar mais detalhes!\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nTemos algo especial para você esta semana — o nosso programa completo de emagrecimento *Harmone Bee:*\n\n- Criolipólise\n- Suplementação completa\n- Cinta modeladora\n- 4 sessões de Detox\n- 6 Retornos de acompanhamento\n- 5 Manejos alimentares\n\n*De R$ 6.800,00 por apenas R$ 3.500,00*\n\nUm programa pensado do início ao fim para você ter resultado real — com acompanhamento em cada etapa.\n\nInteressou? Posso te passar mais detalhes!\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
   },
   {
     id: 'camp_renovacao',
@@ -161,7 +161,7 @@ export const CAMPANHAS: CampanhaDef[] = [
     preco: 'R$ 400,00',
     meta: 'Agenda cheia',
     publico: ['estetica', 'harmoniz', 'ortomol'],
-    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nQue tal dar uma renovação à sua pele esta semana?\n\n🌸 *Limpeza de Pele + Microagulhamento*\n💰 *R$ 400,00*\n\nUm combo que une renovação celular com estímulo de colágeno — para uma pele com mais textura, viço e luminosidade.\n\nTemos agenda disponível. Quer marcar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nQue tal dar uma renovação à sua pele esta semana?\n\n*Limpeza de Pele + Microagulhamento*\n*R$ 400,00*\n\nUm combo que une renovação celular com estímulo de colágeno — para uma pele com mais textura, viço e luminosidade.\n\nTemos agenda disponível. Quer marcar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
   },
   {
     id: 'camp_combo_botox',
@@ -171,7 +171,7 @@ export const CAMPANHAS: CampanhaDef[] = [
     preco: 'R$ 1.399,90',
     meta: 'Agenda cheia',
     publico: ['botox', 'harmoniz'],
-    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nTemos um combo especial para você esta semana:\n\n💎 *Botox + Revitalização Facial*\n💰 *R$ 1.399,90*\n\nUm protocolo completo para suavizar rugas e revitalizar a pele — tudo em um único atendimento.\n\nQuer aproveitar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nTemos um combo especial para você esta semana:\n\n*Botox + Revitalização Facial*\n*R$ 1.399,90*\n\nUm protocolo completo para suavizar rugas e revitalizar a pele — tudo em um único atendimento.\n\nQuer aproveitar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
   },
   {
     id: 'camp_massagem',
@@ -181,7 +181,7 @@ export const CAMPANHAS: CampanhaDef[] = [
     preco: 'R$ 379,90',
     meta: 'Agenda cheia',
     publico: ['reab', 'intrart', 'ozonio'],
-    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nVocê merece um momento só seu. 💆‍♀️\n\n✔ *Massagem Relaxante + EZ Body*\n💰 *R$ 379,90*\n\nUma experiência para relaxar os músculos, reduzir o estresse e recuperar o equilíbrio — de dentro para fora.\n\nTemos horários disponíveis. Quer agendar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nVocê merece um momento só seu.\n\n*Massagem Relaxante + EZ Body*\n*R$ 379,90*\n\nUma experiência para relaxar os músculos, reduzir o estresse e recuperar o equilíbrio — de dentro para fora.\n\nTemos horários disponíveis. Quer agendar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
   },
   {
     id: 'camp_ouvido',
@@ -191,7 +191,7 @@ export const CAMPANHAS: CampanhaDef[] = [
     preco: 'R$ 89,90',
     meta: 'Agenda cheia',
     publico: ['ortomol', 'retorno'],
-    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nSabia que temos um procedimento rápido e seguro para *limpeza de ouvido*?\n\n👂 *Remoção de cerúmen — R$ 89,90*\n\nÉ rápido, indolor e faz uma diferença enorme no conforto auditivo.\n\nQuer agendar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nSabia que temos um procedimento rápido e seguro para *limpeza de ouvido*?\n\n*Remoção de cerúmen — R$ 89,90*\n\nÉ rápido, indolor e faz uma diferença enorme no conforto auditivo.\n\nQuer agendar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
   },
   {
     id: 'camp_drenagem',
@@ -201,7 +201,7 @@ export const CAMPANHAS: CampanhaDef[] = [
     preco: 'R$ 337,00',
     meta: 'Agenda cheia',
     publico: ['estetica', 'reab'],
-    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nPara quem quer leveza e definição corporal, temos uma opção especial:\n\n💧 *Drenagem + Hybrius*\n💰 *R$ 337,00*\n\nReduz retenção de líquidos, proporciona sensação de leveza e auxilia na modelagem corporal.\n\nQuer aproveitar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nPara quem quer leveza e definição corporal, temos uma opção especial:\n\n*Drenagem + Hybrius*\n*R$ 337,00*\n\nReduz retenção de líquidos, proporciona sensação de leveza e auxilia na modelagem corporal.\n\nQuer aproveitar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
   },
   {
     id: 'camp_labial',
@@ -211,7 +211,7 @@ export const CAMPANHAS: CampanhaDef[] = [
     preco: 'R$ 950,00',
     meta: 'Agenda cheia',
     publico: ['harmoniz', 'estetica', 'botox'],
-    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nUm combo para quem quer resultados harmoniosos e naturais:\n\n💋 *Preenchimento Labial + Revitalização Facial*\n💰 *R$ 950,00*\n\nLábios mais definidos e hidratados, com pele iluminada e revitalizada — em um único protocolo.\n\nTemos horários disponíveis esta semana. Quer agendar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
+    msg: n => `Olá, ${fn(n)}!\n\nAqui é a equipe da *Natuclinic.*\n\nUm combo para quem quer resultados harmoniosos e naturais:\n\n*Preenchimento Labial + Revitalização Facial*\n*R$ 950,00*\n\nLábios mais definidos e hidratados, com pele iluminada e revitalizada — em um único protocolo.\n\nTemos horários disponíveis esta semana. Quer agendar?\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`,
   },
 ]
 
