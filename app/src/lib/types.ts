@@ -59,6 +59,9 @@ export interface WaConfig {
 
 export interface VoucherConfig {
   discount: string
+  msgType?: 'aniversario' | 'limpeza'
+  msgAniversario?: string
+  msgLimpeza?: string
 }
 
 export type PageId = 'dashboard' | 'patients' | 'remarketing' | 'reativar' | 'kanban' | 'funnel' | 'bdays' | 'vip' | 'campanha'

@@ -1,7 +1,7 @@
 import { useCRM, thisMonthBdays } from '../../store'
 import { waUrl } from '../../lib/utils'
 import { WA_SVG } from '../../lib/constants'
-import { VoucherConfigModal } from './VoucherConfigModal'
+import { VoucherConfigModal, DEFAULT_MSG_ANIVERSARIO, DEFAULT_MSG_LIMPEZA } from './VoucherConfigModal'
 
 export function Birthdays() {
   const { patients, birthdates, vouchers, voucherConfig, openModal, markVoucherSent, genVoucher, showToast, importBdays } = useCRM()
@@ -31,7 +31,7 @@ export function Birthdays() {
             <div style={{ fontWeight: 600, color: 'var(--gold)', fontSize: 14.5 }}>Aniversariantes de {monthName}</div>
             <div style={{ display: 'flex', gap: 6 }}>
               <button onClick={handleImport} style={{ fontSize: 11, padding: '4px 10px', background: 'var(--surf2)', border: '1px solid var(--bord)', borderRadius: 6, cursor: 'pointer', color: 'var(--txt2)' }}>Importar aniversários</button>
-              <button onClick={() => openModal(<VoucherConfigModal />)} style={{ fontSize: 11, padding: '4px 10px', background: 'var(--surf2)', border: '1px solid var(--bord)', borderRadius: 6, cursor: 'pointer', color: 'var(--txt2)' }}>Configurar desconto</button>
+              <button onClick={() => openModal(<VoucherConfigModal />)} style={{ fontSize: 11, padding: '4px 10px', background: 'var(--surf2)', border: '1px solid var(--bord)', borderRadius: 6, cursor: 'pointer', color: 'var(--txt2)' }}>Configurar Mensagem</button>
             </div>
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--txt3)', padding: '4px 0' }}>Nenhum aniversariante cadastrado este mês. Abra um paciente para adicionar a data de nascimento.</div>
@@ -50,7 +50,17 @@ export function Birthdays() {
     const voucher = vouchers[vkey] || genVoucher(p.id)
     const sent = voucher.sent
     const disc = voucherConfig.discount || '10%'
-    const bdayMsg = `Olá, ${p.nome.split(' ')[0]}.\n\nO mês do seu aniversário chegou e a equipe da *Natuclinic* veio te desejar um novo ciclo repleto de saúde, leveza e conquistas.\n\nComo presente, preparamos um *voucher exclusivo*:\n\n*${disc} de desconto* em qualquer procedimento estético.\n\n*Código:* ${voucher.code}\n\nVálido durante todo o mês.\n\n_Natuclinic — Nutrição e Estética Ortomolecular_`
+    
+    const isLimpeza = voucherConfig.msgType === 'limpeza'
+    const template = isLimpeza 
+      ? (voucherConfig.msgLimpeza || DEFAULT_MSG_LIMPEZA)
+      : (voucherConfig.msgAniversario || DEFAULT_MSG_ANIVERSARIO)
+      
+    const bdayMsg = template
+      .replace(/{nome}/g, p.nome.split(' ')[0])
+      .replace(/{desconto}/g, disc)
+      .replace(/{codigo}/g, voucher.code)
+
     const wu = p.tel ? waUrl(p.tel, bdayMsg) : '#'
     const shortName = p.nome.split(' ').slice(0, 3).join(' ')
     const monthAbbr = new Date(2000, parseInt(mm) - 1).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
@@ -93,7 +103,7 @@ export function Birthdays() {
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={handleImport} style={{ fontSize: 11.5, padding: '5px 12px', background: 'var(--surf2)', border: '1px solid var(--bord)', borderRadius: 7, cursor: 'pointer', color: 'var(--txt2)' }}>Importar aniversários</button>
-            <button onClick={() => openModal(<VoucherConfigModal />)} style={{ fontSize: 11.5, padding: '5px 12px', background: 'var(--surf2)', border: '1px solid var(--bord)', borderRadius: 7, cursor: 'pointer', color: 'var(--txt2)' }}>Configurar desconto</button>
+            <button onClick={() => openModal(<VoucherConfigModal />)} style={{ fontSize: 11.5, padding: '5px 12px', background: 'var(--surf2)', border: '1px solid var(--bord)', borderRadius: 7, cursor: 'pointer', color: 'var(--txt2)' }}>Configurar Mensagem</button>
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

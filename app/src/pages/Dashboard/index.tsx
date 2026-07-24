@@ -199,11 +199,12 @@ export function Dashboard() {
 
   return (
     <div className="content">
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--txt3)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 }}>Visão Financeira & Geral</div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--txt3)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 }}>Visão Geral</div>
       <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 20 }}>
         <Kpi ico="users" lbl="Total Pacientes" val={pts.length.toLocaleString('pt-BR')} sub="Base selecionada" />
         <Kpi ico="check" lbl="Confirmados" val={conf.toLocaleString('pt-BR')} sub={`Taxa ${taxa}%`} />
         
+        {/*
         <div className="kpi" style={{ borderLeft: '3px solid #34D399' }}>
           <div className="kpi-ico" style={{ color: '#34D399' }} dangerouslySetInnerHTML={{ __html: ICO.money }} />
           <div className="kpi-lbl">Faturamento Atual</div>
@@ -228,6 +229,7 @@ export function Dashboard() {
         )}
 
         <Kpi ico="award" lbl="LTV Médio" val={pts.length ? fmtBRL(ltvMedio) : '—'} sub={`${avgSessoes.toFixed(1)} sessões médias por pac.`} />
+        */}
       </div>
 
       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--txt3)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 }}>Engajamento & Retenção</div>
@@ -258,11 +260,11 @@ export function Dashboard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 600, color: 'var(--txt)', marginBottom: 14, fontSize: 14 }}>
             <span dangerouslySetInnerHTML={{ __html: ICO.clip }} /><span>Top Procedimentos</span>
             <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
-              {(['count', 'fat'] as const).map(m => (
+              {/* (['count', 'fat'] as const).map(m => (
                 <button key={m} onClick={() => setTopMode(m)} disabled={m === 'fat' && !hasVipRev} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4, border: '1px solid var(--bord)', background: topMode === m ? 'var(--gold4)' : 'transparent', color: topMode === m ? 'var(--gold)' : m === 'fat' && !hasVipRev ? 'var(--txt3)' : 'var(--txt3)', cursor: m === 'fat' && !hasVipRev ? 'not-allowed' : 'pointer', opacity: m === 'fat' && !hasVipRev ? 0.4 : 1 }}>
                   {m === 'count' ? 'Sessões' : 'Faturamento'}
                 </button>
-              ))}
+              )) */}
             </div>
           </div>
           {topMode === 'fat' && <div style={{ fontSize: 10.5, color: 'var(--txt3)', marginBottom: 10 }}>Faturamento real · {vipPacCount} pacientes VIP · total distribuído por sessão</div>}
